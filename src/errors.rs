@@ -2,9 +2,8 @@ use std::error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum TensorError {
-    MaxDimsError,
-    InvalidTensor,
+pub enum MatrixError {
+    InvalidParams,
     SliceError,
     ViewError,
     BroadcastError,
@@ -12,29 +11,30 @@ pub enum TensorError {
     DimError,
     MatmulShapeError,
     ShapeError,
+    OutOfBounds
 }
 
-impl fmt::Display for TensorError {
+impl fmt::Display for MatrixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            TensorError::MaxDimsError => write!(f, "L2 currently only supports tensors with up to 4 dimensions"),
-            TensorError::InvalidTensor => write!(f, "Invalid parameters for Tensor"),
-            TensorError::SliceError => write!(f, "Invalid slice for Tensor"),
-            TensorError::ViewError => write!(f, "Invalid view shape for Tensor"),
-            TensorError::BroadcastError => write!(f, "Shapes are not broadcastable"),
-            TensorError::OpError => write!(f, "Tensors cannot be operated on"),
-            TensorError::DimError => write!(f, "Tensors cannot be operated on over the given dimension"),
-            TensorError::MatmulShapeError => write!(
+            MatrixError::InvalidParams => write!(f, "Invalid parameters"),
+            MatrixError::SliceError => write!(f, "Invalid slice for Matrix"),
+            MatrixError::ViewError => write!(f, "Invalid view shape for Matrix"),
+            MatrixError::BroadcastError => write!(f, "Shapes are not broadcastable"),
+            MatrixError::OpError => write!(f, "Matrix cannot be operated on"),
+            MatrixError::DimError => write!(f, "Matrix cannot be operated on over the given dimension"),
+            MatrixError::MatmulShapeError => write!(
                 f,
-                "Tensors must have at least two dimensions and have same shape in all dims except the last dimension"
+                "Matrix must have at least two dimensions and have same shape in all dims except the last dimension"
             ),
-            TensorError::ShapeError => write!(f, "Tensors must have the same shape in all dims except the last dimension"),
+            MatrixError::ShapeError => write!(f, "Matrix must have the same shape in all dims except the last dimension"),
+            MatrixError::OutOfBounds => write!(f, "Indices are out of bounds for the matrix")
         }
     }
 }
 
 // This is important for other errors to wrap this one.
-impl error::Error for TensorError {
+impl error::Error for MatrixError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         // Generic error, underlying cause isn't tracked.
         None
