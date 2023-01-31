@@ -1,5 +1,4 @@
-use crate::layout::Layout;
-use super::{layout, errors};
+use super::{layout::Layout, errors::MatrixError};
 
 pub struct Matrix<T> {
     pub shape: Vec<usize>,
@@ -41,7 +40,7 @@ impl<T>  Matrix<T> {
     /// use crate::layout::Layout;
     /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 0..,layout: layout::Layout::RowMajor);
     /// ```
-    pub fn from_iter(_shape: Vec<usize>, _data: impl IntoIterator<Item = T>, _layout: Layout) -> Matrix<T> {
+    pub fn from_iter(_shape: Vec<usize>, _data: impl IntoIterator<Item=T>, _layout: Layout) -> Matrix<T> {
         assert!(!_shape.is_empty());
         let _temp_shape = _shape.clone();
         Matrix {
@@ -51,9 +50,9 @@ impl<T>  Matrix<T> {
                 let mut strides: Vec<usize> = vec![0; _temp_shape.len()];
 
                 if _layout == Layout::RowMajor {
-                    for i in (1..(_temp_shape.len()+1)).rev() {
-                        strides[i-1] = data_size;
-                        data_size = strides[i-1] * _temp_shape[i-1];
+                    for i in (1..(_temp_shape.len() + 1)).rev() {
+                        strides[i - 1] = data_size;
+                        data_size = strides[i - 1] * _temp_shape[i - 1];
                     }
                 }
                 // For Column Major Layout
@@ -67,12 +66,12 @@ impl<T>  Matrix<T> {
                 strides
             },
             data: {
-                let data: Vec<_> = _data.into_iter().take(_temp_shape.iter().copied().reduce(|a, b| a*b).unwrap()).collect();
-                assert_eq!(data.len(), _temp_shape.iter().copied().reduce(|a, b| a*b).unwrap());
+                let data: Vec<_> = _data.into_iter().take(_temp_shape.iter().copied().reduce(|a, b| a * b).unwrap()).collect();
+                assert_eq!(data.len(), _temp_shape.iter().copied().reduce(|a, b| a * b).unwrap());
                 data
             },
             layout: _layout,
-            size: _temp_shape.iter().copied().reduce(|a, b| a*b).unwrap()
+            size: _temp_shape.iter().copied().reduce(|a, b| a * b).unwrap()
         }
     }
 
@@ -87,7 +86,7 @@ impl<T>  Matrix<T> {
     /// ```
     // TODO: Add tests
     pub fn size(&self) -> usize {
-        self.shape.iter().copied().reduce(|a, b| a*b).unwrap()
+        self.shape.iter().copied().reduce(|a, b| a * b).unwrap()
     }
 
 
@@ -136,12 +135,12 @@ impl<T>  Matrix<T> {
     /// println!("{}", mat.check_bounds(vec![3, 4])); // Prints false because !3<3 && !4<4
     /// println!("{}", mat.check_bounds(vec![2, 3])); // Prints true because 2<3 && 3<4
     /// ```
-    pub fn check_bounds(&self, idx: &Vec<usize>) -> bool{
+    pub fn check_bounds(&self, idx: &Vec<usize>) -> bool {
         if idx.len() != self.shape.len() {
             return false;
         }
         let _size: usize = idx.len();
-        for i in 0.._size{
+        for i in 0.._size {
             if idx[i] >= self.shape[i] {
                 return false;
             }
@@ -159,15 +158,15 @@ impl<T>  Matrix<T> {
     /// println!("{}", mat.get_physical_idx(vec![2, 1])); // Prints 9, because 9 = 2*4 + 1*1, since strides = [4, 1]
     /// ```
     // TODO: Add tests
-    pub fn get_physical_idx(&self, idx: &Vec<usize>) -> Option<usize>{
+    pub fn get_physical_idx(&self, idx: &Vec<usize>) -> Result<usize, MatrixError> {
         let mut return_val: usize = 0;
         if self.check_bounds(idx) {
-            for i in 0..idx.len(){
+            for i in 0..idx.len() {
                 return_val += idx[i] * self.shape[i];
             }
-            Some(return_val)
+            Ok(return_val)
         } else {
-            None
+            Err(MatrixError::OutOfBounds)
         }
     }
 
@@ -183,12 +182,10 @@ impl<T>  Matrix<T> {
     /// ```
     // TODO: Add slicing
     // TODO: Add tests
-    pub fn get(&self, idx: &Vec<usize>) -> Option<&T> {
+    pub fn get(&self, idx: &Vec<usize>) -> Result<&T, MatrixError> {
         match self.get_physical_idx(idx) {
-            None => None,
-            Some(physical_idx) => {
-                Some(&self.data[physical_idx])
-            },
+            Ok(physical_idx) => Ok(&self.data[physical_idx]),
+            Err(m_err) => Err(m_err)
         }
     }
 
@@ -197,14 +194,13 @@ impl<T>  Matrix<T> {
     ///
     // TODO: Add slicing
     // TODO: Add tests
-    pub fn get_mut(&mut self, idx: &Vec<usize>) -> Option<&mut T> {
+    pub fn get_mut(&mut self, idx: &Vec<usize>) -> Result<&mut T, MatrixError> {
         match self.get_physical_idx(idx) {
-            None => None,
-            Some(physical_idx) => {
-                Some(&mut self.data[physical_idx])
-            },
+            Ok(physical_idx) => Ok(&mut self.data[physical_idx]),
+            Err(m_err) => Err(m_err)
         }
     }
+
 
     /// Sets a specific value in the matrix to the input. This is where self.get_mut gets used. In
     /// the future we might make get_mut private.
@@ -221,12 +217,13 @@ impl<T>  Matrix<T> {
     /// ```
     // TODO: Add slicing
     // TODO: Add tests
-    pub fn set(&mut self, idx: &Vec<usize>, value: T) -> bool {
-        if let Some(cell) = self.get_mut(idx) {
-            *cell = value;
-            true
-        } else {
-            false
+    pub fn set(&mut self, idx: &Vec<usize>, value: T) -> Result<(), MatrixError> {
+        match self.get_mut(idx) {
+            Ok(cell) => {
+                *cell = value;
+                Ok(())
+            },
+            Err(m_err) => Err(m_err)
         }
     }
 
@@ -244,8 +241,107 @@ impl<T>  Matrix<T> {
     /// use crate::layout::Layout;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![1, 2, 3], layout: layout::Layout);
     /// ```
-    // TODO: Add docs and examples
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
         self.data.iter_mut().for_each(|n| func(n));
     }
 }
+
+/// Calculates strides from a given shape and layout.
+///
+/// # Examples
+/// ```
+/// use crate::layout::Layout;
+/// let mut val = calc_strides_from_shape(vec![3, 4], layout: layout::Layout::RowMajor);
+/// println!("{:?}", val); // Prints [4, 1]
+/// ```
+/// TODO: Add tests
+fn calc_strides_from_shape(shape: &Vec<usize>, layout: Layout) -> Vec<usize> {
+    let mut data_size: usize = 1;
+    let mut strides: Vec<usize> = vec![0; shape.len()];
+
+    if layout == Layout::RowMajor {
+        for i in (1..(shape.len()+1)).rev() {
+            strides[i-1] = data_size;
+            data_size = strides[i-1] * shape[i-1];
+        }
+    }
+    // For Column Major Layout
+    else {
+        for i in 0..shape.len() {
+            strides[i] = data_size;
+            data_size = strides[i] * shape[i];
+        }
+    }
+    strides
+}
+
+/// Calculates strides from a given shape and layout.
+///
+/// # Examples
+/// ```
+/// use crate::layout::Layout;
+/// let mut val = calc_size_from_shape(vec![3, 4]);
+/// println!("{}", val); // Prints 12, because 12 = 3*4
+/// ```
+/// TODO: Add tests
+fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
+    shape.iter().copied().reduce(|a, b| a*b).unwrap()
+}
+
+/// Given two matrices the function broadcast either makes their shapes compatible or returns
+/// an error stating that the given matrices aren't broadcastable.
+/// ///
+/// # Examples
+/// ```
+/// match matrix::broadcast(&vec![3, 4], layout::Layout::RowMajor, &vec![7, 3, 4], layout::Layout::RowMajor) {
+///             Ok((v1, v2, v3)) => {
+///                 println!("{:?}", v1); // Should print out [7, 3, 4]
+///                 println!("{:?}", v2); // Should print out [0, 4, 1]
+///                 println!("{:?}", v3); // Should print out [12, 4, 1]
+///             },
+///             Err(E) => panic!("{}", E)
+///         }
+/// ```
+///
+/// TODO: Add tests
+pub fn broadcast(lhs_shape: &Vec<usize>, lhs_layout: Layout, rhs_shape: &Vec<usize>, rhs_layout: Layout) -> Result<(Vec<usize>, Vec<usize>, Vec<usize>), MatrixError> {
+    let lhs_shape = if lhs_shape.len() < rhs_shape.len() {
+        let ones = vec![1; rhs_shape.len() - lhs_shape.len()];
+        [&ones[..], &lhs_shape[..]].concat()
+    } else {
+        lhs_shape.clone()
+    };
+
+    let rhs_shape = if rhs_shape.len() < lhs_shape.len() {
+        let ones = vec![1; lhs_shape.len() - rhs_shape.len()];
+        [&ones[..], &rhs_shape[..]].concat()
+    } else {
+        rhs_shape.clone()
+    };
+
+    let mut broadcasted_shape: Vec<usize> = Vec::with_capacity(lhs_shape.len());
+    let mut broadcasted_lhs_strides: Vec<usize> = calc_strides_from_shape(&lhs_shape, lhs_layout);
+    let mut broadcasted_rhs_strides: Vec<usize> = calc_strides_from_shape(&rhs_shape, rhs_layout);
+
+    for (i, (&lhs, &rhs)) in lhs_shape.iter().zip(rhs_shape.iter()).enumerate() {
+        if lhs == rhs {
+            broadcasted_shape.push(lhs);
+        } else if lhs == 1 {
+            broadcasted_shape.push(rhs);
+            broadcasted_lhs_strides[i] = 0;
+        } else if rhs == 1 {
+            broadcasted_shape.push(lhs);
+            broadcasted_rhs_strides[i] = 0;
+        } else {
+            return Err(MatrixError::BroadcastError);
+        }
+    }
+
+    Ok((
+        broadcasted_shape,
+        broadcasted_lhs_strides,
+        broadcasted_rhs_strides,
+    ))
+}
+
+
