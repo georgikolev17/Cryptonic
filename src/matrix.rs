@@ -1,6 +1,6 @@
 use super::{layout::Layout, errors::MatrixError};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Matrix<T> {
     pub shape: Vec<usize>,
     pub strides: Vec<usize>,
