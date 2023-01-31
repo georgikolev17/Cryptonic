@@ -33,6 +33,31 @@ mod test_matrix_instantiation {
             },
             Err(E) => panic!("{}", E)
         }
+    }
 
+    // Write tests for everything cause it's buggy as fuck
+    #[test]
+    fn test_transpose(){
+        let mut mat: Matrix<i32> = Matrix::new(vec![2, 3], Layout::RowMajor);
+        mat.set(&vec![0,0], 6);
+        mat.set(&vec![0,1], 4);
+        mat.set(&vec![0,2], 24);
+        mat.set(&vec![1,0], 1);
+        mat.set(&vec![1,1], -9);
+        mat.set(&vec![1,2], 8);
+
+        match mat.get(&vec![0,0]) {
+            Ok(val) => println!("{}", val),
+            Err(err) => println!("{}", err)
+        }
+
+        mat.transpose();
+        println!("{:?}", mat.strides);
+        println!("{:?}", mat.shape);
+/*
+        match mat.get(&vec![0,0]) {
+            Ok(val) => println!("{}", val),
+            Err(err) => println!(err)
+        }*/
     }
 }
