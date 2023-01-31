@@ -1,7 +1,7 @@
 extern crate core;
 
-mod matrix;
-mod errors;
-mod layout;
-mod tests;
+pub mod matrix;
+pub mod errors;
+pub mod layout;
+pub mod tests;
 
