@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_matrix_instantiation {
+    use crate::errors::MatrixError;
     use crate::matrix;
     use crate::layout::Layout;
     use crate::matrix::Matrix;
@@ -36,28 +37,58 @@ mod test_matrix_instantiation {
     }
 
     // Write tests for everything cause it's buggy as fuck
+//     #[test]
+//     fn test_transpose(){
+//         let mut mat: Matrix<i32> = Matrix::new(vec![2, 3], Layout::RowMajor);
+//         mat.set(&vec![0,0], 6);
+//         mat.set(&vec![0,1], 4);
+//         mat.set(&vec![0,2], 24);
+//         mat.set(&vec![1,0], 1);
+//         mat.set(&vec![1,1], -9);
+//         mat.set(&vec![1,2], 8);
+//
+//         match mat.get(&vec![0,0]) {
+//             Ok(val) => println!("{}", val),
+//             Err(err) => println!("{}", err)
+//         }
+//
+//         mat.transpose();
+//         println!("{:?}", mat.strides);
+//         println!("{:?}", mat.shape);
+// /*
+//         match mat.get(&vec![0,0]) {
+//             Ok(val) => println!("{}", val),
+//             Err(err) => println!(err)
+//         }*/
+//     }
+
     #[test]
-    fn test_transpose(){
-        let mut mat: Matrix<i32> = Matrix::new(vec![2, 3], Layout::RowMajor);
-        mat.set(&vec![0,0], 6);
-        mat.set(&vec![0,1], 4);
-        mat.set(&vec![0,2], 24);
-        mat.set(&vec![1,0], 1);
-        mat.set(&vec![1,1], -9);
-        mat.set(&vec![1,2], 8);
+    fn test_get_physical_idx() {
+        let mat: Matrix<i32> = Matrix::new(vec![4, 3, 7], Layout::RowMajor);
 
-        match mat.get(&vec![0,0]) {
-            Ok(val) => println!("{}", val),
-            Err(err) => println!("{}", err)
-        }
+        let (x, y, z) = (4, 0, 0);
+        // Expect error  to be thrown if index out of bounds
+        let expected_error = Err(MatrixError::OutOfBounds);
+        assert_eq!(expected_error, mat.get_physical_idx(&vec![x, y, z]));
 
-        mat.transpose();
-        println!("{:?}", mat.strides);
-        println!("{:?}", mat.shape);
-/*
-        match mat.get(&vec![0,0]) {
-            Ok(val) => println!("{}", val),
-            Err(err) => println!(err)
-        }*/
+        // The matrix [4, 3, 7] has stride (21, 7, 1)
+        // Expect physical id of elemnt [1, 2, 3] to equal 1*21 + 2*7 + 3*1
+        //
+        let (x, y, z) = (1, 2, 3);
+        assert_eq!(Ok(1*21 + 2*7 + 3*1), mat.get_physical_idx(&vec![x, y, z]));
+    }
+}
+
+#[cfg(test)]
+mod test_layers
+{
+    use crate::dense_layer;
+
+    #[test]
+    fn test_dense_layer_weights_and_biases() {
+        let dense_layer = dense_layer::DenseLayer::new(20, 10);
+        assert_eq!(10, dense_layer.weights.len());
+        assert_eq!(20, dense_layer.weights[0].len());
+        assert_eq!(10, dense_layer.biases.len());
     }
 }
