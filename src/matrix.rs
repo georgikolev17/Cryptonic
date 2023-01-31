@@ -1,5 +1,6 @@
 use super::{layout::Layout, errors::MatrixError};
 
+#[derive(Debug)]
 pub struct Matrix<T> {
     pub shape: Vec<usize>,
     pub strides: Vec<usize>,
@@ -247,7 +248,7 @@ impl<T>  Matrix<T> {
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
         self.data.iter_mut().for_each(|n| func(n));
     }
-    /// TODO: Finish
+    // TODO: Finish
     /*
     pub fn transpose(&mut self){
         match self.layout {
