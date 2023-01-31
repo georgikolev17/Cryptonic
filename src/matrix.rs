@@ -18,8 +18,8 @@ impl<T>  Matrix<T> {
     ///
     /// # Example
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// ```
     pub fn new(_shape: Vec<usize>, layout: Layout) -> Matrix<T>
         where
@@ -37,10 +37,10 @@ impl<T>  Matrix<T> {
     ///
     /// # Example
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 0..,layout: layout::Layout::RowMajor);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 0..,layout: Layout::RowMajor);
     /// ```
-    pub fn from_iter(_shape: Vec<usize>, _data: impl IntoIterator<Item=T>, _layout: Layout) -> Matrix<T> {
+    pub fn from_iter(_shape: Vec<usize>, _data: impl IntoIterator<Item = T>, _layout: Layout) -> Matrix<T> {
         assert!(!_shape.is_empty());
         let _temp_shape = _shape.clone();
         Matrix {
@@ -80,8 +80,8 @@ impl<T>  Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// println!("{}", mat.size()); // Prints 12, because 12 = 3*4
     /// ```
     // TODO: Add tests
@@ -94,8 +94,8 @@ impl<T>  Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// println!("{:?}", mat.shape()); // Prints [3, 4]
     /// ```
     // TODO: Add tests
@@ -108,13 +108,13 @@ impl<T>  Matrix<T> {
     /// This depends on the layout of the matrix(i.e. whether it's Row Major or Column Major)
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// println!("{:?}", mat.strides()); // Prints [4, 1]
     /// ```
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::ColumnMajor);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::ColumnMajor);
     /// println!("{:?}", mat.strides()); // Prints [1, 3]
     /// ```
     // TODO: Add tests
@@ -130,10 +130,10 @@ impl<T>  Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
-    /// println!("{}", mat.check_bounds(vec![3, 4])); // Prints false because !3<3 && !4<4
-    /// println!("{}", mat.check_bounds(vec![2, 3])); // Prints true because 2<3 && 3<4
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
+    /// println!("{}", mat.check_bounds(&vec![3, 4])); // Prints false because !3<3 && !4<4
+    /// println!("{}", mat.check_bounds(&vec![2, 3])); // Prints true because 2<3 && 3<4
     /// ```
     pub fn check_bounds(&self, idx: &Vec<usize>) -> bool {
         if idx.len() != self.shape.len() {
@@ -151,18 +151,20 @@ impl<T>  Matrix<T> {
     /// Returns the physical id in the self.data vector
     /// Returns None if check_bounds is false
     ///
+    ///
+    ///
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
-    /// println!("{}", mat.get_physical_idx(vec![2, 1])); // Prints 9, because 9 = 2*4 + 1*1, since strides = [4, 1]
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
+    /// println!("{}", mat.get_physical_idx(&vec![2, 1])); // Prints 9, because 9 = 2*4 + 1*1, since strides = [4, 1]
     /// ```
     // TODO: Add tests
     pub fn get_physical_idx(&self, idx: &Vec<usize>) -> Result<usize, MatrixError> {
         let mut return_val: usize = 0;
         if self.check_bounds(idx) {
             for i in 0..idx.len() {
-                return_val += idx[i] * self.shape[i];
+                return_val += idx[i] * self.strides[i];
             }
             Ok(return_val)
         } else {
@@ -175,10 +177,10 @@ impl<T>  Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
-    /// println!("{}", mat.get(vec![2, 1])); // prints 0 because i32 default value is 0
-    /// println!("{}", mat.get(vec![5, 6])); // prints None because self.get_physical_idx() fails
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
+    /// println!("{}", mat.get(&vec![2, 1])); // prints 0 because i32 default value is 0
+    /// println!("{}", mat.get(&vec![5, 6])); // prints None because self.get_physical_idx() fails
     /// ```
     // TODO: Add slicing
     // TODO: Add tests
@@ -210,10 +212,10 @@ impl<T>  Matrix<T> {
     /// function for that case.
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: layout::Layout::RowMajor);
-    /// mat.set(vec![0,0], 5);
-    /// println!("{}", mat.get(vec![0,0])); // print 5
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
+    /// mat.set(&vec![0,0], 5);
+    /// println!("{}", mat.get(&vec![0,0])); // print 5
     /// ```
     // TODO: Add slicing
     // TODO: Add tests
@@ -238,20 +240,41 @@ impl<T>  Matrix<T> {
     ///
     /// # Examples
     /// ```
-    /// use crate::layout::Layout;
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![1, 2, 3], layout: layout::Layout);
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![1, 2, 3], layout: Layout::RowMajor);
     /// ```
+    /// TODO: Once slices are added allow apply on specific slices
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
         self.data.iter_mut().for_each(|n| func(n));
     }
+    /// TODO: Finish
+    /*
+    pub fn transpose(&mut self){
+        match self.layout {
+            Layout::RowMajor => {
+                self.layout = Layout::ColumnMajor;
+                self.shape.reverse();
+                self.strides = calc_strides_from_shape(&self.shape, Layout::ColumnMajor);
+            },
+            Layout::ColumnMajor => {
+                self.layout = Layout::RowMajor;
+                self.shape.reverse();
+                self.strides = calc_strides_from_shape(&self.shape, Layout::RowMajor);
+            },
+        }
+    }
+    */
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 /// Calculates strides from a given shape and layout.
 ///
 /// # Examples
 /// ```
-/// use crate::layout::Layout;
-/// let mut val = calc_strides_from_shape(vec![3, 4], layout: layout::Layout::RowMajor);
+/// use Cryptonic::{matrix::Matrix, layout::Layout};
+/// let mut val = calc_strides_from_shape(vec![3, 4], layout: Layout::RowMajor);
 /// println!("{:?}", val); // Prints [4, 1]
 /// ```
 /// TODO: Add tests
@@ -290,10 +313,11 @@ fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
 
 /// Given two matrices the function broadcast either makes their shapes compatible or returns
 /// an error stating that the given matrices aren't broadcastable.
-/// ///
+///
 /// # Examples
 /// ```
-/// match matrix::broadcast(&vec![3, 4], layout::Layout::RowMajor, &vec![7, 3, 4], layout::Layout::RowMajor) {
+/// use Cryptonic::{matrix::broadcast, layout::Layout};;
+/// match broadcast(&vec![3, 4], Layout::RowMajor, &vec![7, 3, 4], Layout::RowMajor) {
 ///             Ok((v1, v2, v3)) => {
 ///                 println!("{:?}", v1); // Should print out [7, 3, 4]
 ///                 println!("{:?}", v2); // Should print out [0, 4, 1]
