@@ -12,7 +12,7 @@ pub enum MatrixError {
     MatmulShapeError,
     ShapeError,
     OutOfBounds,
-    ReshapeError
+    ReshapeError,
 }
 
 impl fmt::Display for MatrixError {
