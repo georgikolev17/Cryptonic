@@ -286,19 +286,15 @@ impl<T>  Matrix<T> {
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
         self.data.iter_mut().for_each(|n| func(n));
     }
-    // TODO: Finish
+
+
+    // Transposes a matrix
     pub fn transpose(&mut self){
+        self.shape.reverse();
+        self.strides.reverse();
         match self.layout {
-            Layout::RowMajor => {
-                self.layout = Layout::ColumnMajor;
-                self.shape.reverse();
-                self.strides = calc_strides_from_shape(&self.shape, Layout::ColumnMajor);
-            },
-            Layout::ColumnMajor => {
-                self.layout = Layout::RowMajor;
-                self.shape.reverse();
-                self.strides = calc_strides_from_shape(&self.shape, Layout::RowMajor);
-            },
+            Layout::RowMajor => self.layout = Layout::ColumnMajor,
+            Layout::ColumnMajor => self.layout = Layout::RowMajor
         }
     }
 
