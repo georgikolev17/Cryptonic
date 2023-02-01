@@ -11,7 +11,8 @@ pub enum MatrixError {
     DimError,
     MatmulShapeError,
     ShapeError,
-    OutOfBounds
+    OutOfBounds,
+    ReshapeError
 }
 
 impl fmt::Display for MatrixError {
@@ -28,7 +29,8 @@ impl fmt::Display for MatrixError {
                 "Matrix must have at least two dimensions and have same shape in all dims except the last dimension"
             ),
             MatrixError::ShapeError => write!(f, "Matrix must have the same shape in all dims except the last dimension"),
-            MatrixError::OutOfBounds => write!(f, "Indices are out of bounds for the matrix")
+            MatrixError::OutOfBounds => write!(f, "Indices are out of bounds for the matrix"),
+            MatrixError::ReshapeError => write!(f, "Matrix cannot be reshaped into given shape")
         }
     }
 }

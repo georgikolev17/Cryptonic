@@ -85,7 +85,6 @@ impl<T>  Matrix<T> {
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// println!("{}", mat.size()); // Prints 12, because 12 = 3*4
     /// ```
-    // TODO: Add tests
     pub fn size(&self) -> usize {
         self.shape.iter().copied().reduce(|a, b| a * b).unwrap()
     }
@@ -99,9 +98,31 @@ impl<T>  Matrix<T> {
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// println!("{:?}", mat.shape()); // Prints [3, 4]
     /// ```
-    // TODO: Add tests
     pub fn shape(&self) -> &Vec<usize> {
         &self.shape
+    }
+
+    /// Reshapes the matrix if possible.
+    ///
+    /// # Examples
+    /// ```
+    /// use Cryptonic::{matrix::Matrix, layout::Layout, errors::MatrixError};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![100], Layout::RowMajor);
+    ///
+    /// assert_eq!(Err(MatrixError::ReshapeError), mat.reshape(&vec![20, 6]));
+    /// let l = mat.reshape(&vec![20, 5]);
+    /// assert_eq!(mat.shape(), &vec![20, 5]);
+    /// ```
+    pub fn reshape(&mut self, new_shape: &Vec<usize>) -> Result<(), MatrixError>{
+        let size: usize = new_shape.iter().copied().reduce(|a, b| a * b).unwrap();
+        if size == self.size {
+            self.shape = new_shape.clone();
+            self.strides = calc_strides_from_shape(new_shape, self.layout);
+            Ok(())
+        }
+        else {
+            Err(MatrixError::ReshapeError)
+        }
     }
 
 
@@ -118,7 +139,6 @@ impl<T>  Matrix<T> {
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::ColumnMajor);
     /// println!("{:?}", mat.strides()); // Prints [1, 3]
     /// ```
-    // TODO: Add tests
     pub fn strides(&self) -> &Vec<usize> {
         &self.strides
     }
@@ -136,17 +156,17 @@ impl<T>  Matrix<T> {
     /// println!("{}", mat.check_bounds(&vec![3, 4])); // Prints false because !3<3 && !4<4
     /// println!("{}", mat.check_bounds(&vec![2, 3])); // Prints true because 2<3 && 3<4
     /// ```
-    pub fn check_bounds(&self, idx: &Vec<usize>) -> bool {
+    pub fn check_bounds(&self, idx: &Vec<usize>) -> Result<(), MatrixError> {
         if idx.len() != self.shape.len() {
-            return false;
+            return Err(MatrixError::DimError);
         }
         let _size: usize = idx.len();
         for i in 0.._size {
             if idx[i] >= self.shape[i] {
-                return false;
+                return Err(MatrixError::OutOfBounds);
             }
         }
-        return true;
+        return Ok(());
     }
 
     /// Returns the physical id in the self.data vector
@@ -160,16 +180,17 @@ impl<T>  Matrix<T> {
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
     /// println!("{}", mat.get_physical_idx(&vec![2, 1])); // Prints 9, because 9 = 2*4 + 1*1, since strides = [4, 1]
     /// ```
-    // TODO: Add tests
     pub fn get_physical_idx(&self, idx: &Vec<usize>) -> Result<usize, MatrixError> {
         let mut return_val: usize = 0;
-        if self.check_bounds(idx) {
-            for i in 0..idx.len() {
-                return_val += idx[i] * self.strides[i];
-            }
-            Ok(return_val)
-        } else {
-            Err(MatrixError::OutOfBounds)
+        match self.check_bounds(idx) {
+            Ok(()) => {
+                for i in 0..idx.len() {
+                    return_val += idx[i] * self.strides[i];
+                }
+                Ok(return_val)
+            },
+            // This broadcasts the error from self.check_bounds()
+            Err(err) => Err(err)
         }
     }
 
@@ -184,7 +205,6 @@ impl<T>  Matrix<T> {
     /// println!("{}", mat.get(&vec![5, 6])); // prints None because self.get_physical_idx() fails
     /// ```
     // TODO: Add slicing
-    // TODO: Add tests
     pub fn get(&self, idx: &Vec<usize>) -> Result<&T, MatrixError> {
         match self.get_physical_idx(idx) {
             Ok(physical_idx) => Ok(&self.data[physical_idx]),
@@ -196,7 +216,6 @@ impl<T>  Matrix<T> {
     /// I haven't included examples
     ///
     // TODO: Add slicing
-    // TODO: Add tests
     pub fn get_mut(&mut self, idx: &Vec<usize>) -> Result<&mut T, MatrixError> {
         match self.get_physical_idx(idx) {
             Ok(physical_idx) => Ok(&mut self.data[physical_idx]),
@@ -219,7 +238,6 @@ impl<T>  Matrix<T> {
     /// println!("{}", mat.get(&vec![0,0])); // print 5
     /// ```
     // TODO: Add slicing
-    // TODO: Add tests
     pub fn set(&mut self, idx: &Vec<usize>, value: T) -> Result<(), MatrixError> {
         match self.get_mut(idx) {
             Ok(cell) => {
@@ -230,26 +248,45 @@ impl<T>  Matrix<T> {
         }
     }
 
+    /// Apply a function to all cells of the matrix.
+    /// Cells are provided as immutable references to the function,
+    /// if you want to modify the cells, use `apply_mut`.
+    ///
+    /// # Examples
+    /// ```
+    /// // Get the sum of all cells
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], layout: Layout::RowMajor);
+    /// let mut sum = 0;
+    /// mat.apply(|n| sum += *n);
+    ///
+    /// assert_eq!(sum, 153);
+    /// ```
     // TODO: Once slices are added allow apply on specific slices
-    // TODO: Add docs and examples
     pub fn apply<F: FnMut(&T)>(&self, mut func: F) {
         self.data.iter().for_each(|n| func(n));
     }
 
-    /// Applies a specific function to every element of the matrix
-    /// In the future we'll allow self.apply_mut on specific slices.
+    /// Apply a function to all cells of the matrix.
+    /// Cells are provided as mutable references to the function,
+    /// and can therefore be modified.
     ///
     /// # Examples
     /// ```
+    /// // Modify all cells with a function
     /// use Cryptonic::{matrix::Matrix, layout::Layout};
-    /// let mut mat: Matrix<i32> = Matrix::new(vec![1, 2, 3], layout: Layout::RowMajor);
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
+    /// mat.apply_mut(|mut n| n *= 2);
+    ///
+    /// assert_eq!(mat.get(&vec![0, 0]).unwrap(), Ok(0));
+    /// assert_eq!(mat.get(&vec![0, 1]).unwrap(), Ok(2));
+    /// assert_eq!(mat.get(&vec![0, 2]).unwrap(), Ok(4));
     /// ```
     /// TODO: Once slices are added allow apply on specific slices
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
         self.data.iter_mut().for_each(|n| func(n));
     }
     // TODO: Finish
-    /*
     pub fn transpose(&mut self){
         match self.layout {
             Layout::RowMajor => {
@@ -264,7 +301,7 @@ impl<T>  Matrix<T> {
             },
         }
     }
-    */
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -275,11 +312,12 @@ impl<T>  Matrix<T> {
 /// # Examples
 /// ```
 /// use Cryptonic::{matrix::Matrix, layout::Layout};
-/// let mut val = calc_strides_from_shape(vec![3, 4], layout: Layout::RowMajor);
+/// use Cryptonic::matrix::calc_strides_from_shape;
+/// let mut val = calc_strides_from_shape(&vec![3, 4], layout: Layout::RowMajor);
 /// println!("{:?}", val); // Prints [4, 1]
 /// ```
 /// TODO: Add tests
-fn calc_strides_from_shape(shape: &Vec<usize>, layout: Layout) -> Vec<usize> {
+pub fn calc_strides_from_shape(shape: &Vec<usize>, layout: Layout) -> Vec<usize> {
     let mut data_size: usize = 1;
     let mut strides: Vec<usize> = vec![0; shape.len()];
 
@@ -303,12 +341,13 @@ fn calc_strides_from_shape(shape: &Vec<usize>, layout: Layout) -> Vec<usize> {
 ///
 /// # Examples
 /// ```
+/// use Cryptonic::matrix::calc_size_from_shape;
 /// use crate::layout::Layout;
-/// let mut val = calc_size_from_shape(vec![3, 4]);
+/// let mut val = calc_size_from_shape(&vec![3, 4]);
 /// println!("{}", val); // Prints 12, because 12 = 3*4
 /// ```
 /// TODO: Add tests
-fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
+pub fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
     shape.iter().copied().reduce(|a, b| a*b).unwrap()
 }
 
@@ -317,7 +356,7 @@ fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
 ///
 /// # Examples
 /// ```
-/// use Cryptonic::{matrix::broadcast, layout::Layout};;
+/// use Cryptonic::{matrix::broadcast, layout::Layout};
 /// match broadcast(&vec![3, 4], Layout::RowMajor, &vec![7, 3, 4], Layout::RowMajor) {
 ///             Ok((v1, v2, v3)) => {
 ///                 println!("{:?}", v1); // Should print out [7, 3, 4]
