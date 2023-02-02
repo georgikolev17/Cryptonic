@@ -4,6 +4,7 @@ mod test_matrix_functionality {
     use crate::layout::Layout;
     use crate::matrix;
     use crate::matrix::Matrix;
+    use crate::matrix::MatrixIter;
     use core::prelude;
 
     #[test]
@@ -193,6 +194,29 @@ mod test_matrix_functionality {
     #[test]
     fn test_calc_next_idx(){
         //println!("{:?}", calc_next_idx(&vec![3, 3], &vec![2,1]))
+    }
+
+    #[test]
+    pub fn test_is_index_in_bounds() {
+        let mat : Matrix<i32> = Matrix::new(vec![3, 2, 4], Layout::RowMajor);
+
+        assert!(mat.is_index_in_bounds(&vec![2, 1, 3]));
+        assert!(!mat.is_index_in_bounds(&vec![2, 2, 3]));
+        assert!(!mat.is_index_in_bounds(&vec![1, 1]));
+    }
+
+    #[test]
+    fn test_iter() {
+        let mat : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut matrixIter = MatrixIter {
+            mat: &mat,
+            index: vec![0; mat.shape().len()],
+            current_el: Option::None,
+            empty: false,
+        };
+        while !matrixIter.empty {
+            println!("{:?}", matrixIter.next());
+        }
     }
 }
 

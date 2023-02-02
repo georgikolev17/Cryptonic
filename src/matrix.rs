@@ -1,4 +1,5 @@
 use std::ops::{Add, Index};
+use std::thread::current;
 use super::{errors::MatrixError, layout::Layout};
 
 #[derive(Debug, PartialEq)]
@@ -8,6 +9,7 @@ pub struct Matrix<T> {
     pub data: Vec<T>,
     pub layout: Layout,
     pub size: usize,
+    // pub matrix_iterator: MatrixIter<'a, T>
 }
 
 impl<T> Matrix<T> {
@@ -326,6 +328,13 @@ impl<T> Matrix<T> {
         Some(new_shape)
     }
 
+    pub fn is_index_in_bounds(&self, index : &Vec<usize>) -> bool {
+        if index.len() != self.shape.len() {
+            return false;
+        }
+        !index.iter().zip(self.shape.iter()).any(|(x, y)| x>=y)
+
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -448,16 +457,24 @@ impl<T> Index<&[usize]> for Matrix<T> where T: Clone{
     }
 }
 */
-/*
 pub struct MatrixIter<'a, T> {
     pub mat: &'a Matrix<T>,
     pub index: Vec<usize>,
+    pub current_el: Option<(&'a T)>,
+    pub empty: bool,
 }
 
 impl<'a, T> Iterator for MatrixIter<'a, T> {
     type Item = &'a T;
 
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next(&mut self) -> Option<(Self::Item)> {
+        if self.mat.is_index_in_bounds(&self.index) && !self.empty {
+            self.current_el = Some(&self.mat.get(&self.index).unwrap());
+            print!("{:?} -> ", self.index)
+        }
+        else {
+            return None;
+        }
         let dims = self.mat.shape();
         let mut i = self.mat.shape().len() - 1;
         while i >= 0 {
@@ -466,35 +483,36 @@ impl<'a, T> Iterator for MatrixIter<'a, T> {
                 break;
             } else {
                 self.index[i] = 0;
-                i -= 1;
+                if i == 0 {
+                    self.empty = true;
+                    break;
+                }
+                i-=1;
             }
         }
-
-        if i < 0 {
-            None
-        }
-        else {
-            //let index = self.index.iter().enumerate().fold(0, |acc, (i, &x)| acc + x * self.mat.dims[i..].iter().product::<usize>());
-            Some(&self.mat.get(&self.index).unwrap())
-        }
+        Some(self.current_el.unwrap())
     }
 }
+// impl<T> Iterator for Matrix<T>{
+//     type Item = T;
+//     let Mat_iterator = 'a MatrixIter{mat: &self, index: vec![0; self.shape().len()], current_el: Option::None, empty: false};
+//
+//     fn next(&mut self) -> Option<T> {
+//         let mut mat_iter = MatrixIter{mat: &self, index: vec![0; self.shape().len()], current_el: Option::None, empty: false};
+//         mat_iter.next()
+//     }
+// }
 
-impl<T> Iterator for Matrix<T>{
-    type Item = T;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        MatrixIter{mat: &self, index: vec![0; self.shape().len()]}.next()
-    }
-}
-
-
-impl<T: 'static> IntoIterator for Matrix<T>{
-    type Item = &'static T;
-    type IntoIter= MatrixIter<'static, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        MatrixIter { mat: &self, index: vec![0; self.shape().len()] }
-    }
-}
-*/
+// impl<T: 'static> IntoIterator for Matrix<T>{
+//     type Item = &'static T;
+//     type IntoIter= MatrixIter<'static, T>;
+//
+//     fn into_iter(self) -> Self::IntoIter {
+//         MatrixIter {
+//             mat: &self,
+//             index: vec![0; self.shape().len()],
+//             current_el:
+//         }
+//     }
+// }
