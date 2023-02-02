@@ -1,3 +1,4 @@
+use std::ops::{Add, Index};
 use super::{errors::MatrixError, layout::Layout};
 
 #[derive(Debug, PartialEq)]
@@ -290,7 +291,7 @@ impl<T> Matrix<T> {
         self.data.iter_mut().for_each(|n| func(n));
     }
 
-    // Transposes a matrix
+    /// Transposes the matrix. Reverses the axis.
     pub fn transpose(&mut self) {
         self.shape.reverse();
         self.strides.reverse();
@@ -299,6 +300,32 @@ impl<T> Matrix<T> {
             Layout::ColumnMajor => self.layout = Layout::RowMajor,
         }
     }
+
+    pub fn calc_next_idx(&self, current_idx: &Vec<usize>) -> Option<Vec<usize>>{
+
+        let mut new_shape: Vec<usize> = current_idx.clone();
+        let mut _shape = self.shape().clone();
+        let mut _current_idx = current_idx.clone();
+
+        new_shape.reverse();
+        _shape.reverse();
+        _current_idx.reverse();
+
+        let mut internal_counter = 0;
+        for (curr_dim, shape_dim) in _current_idx.iter().zip(_shape.iter()) {
+            if curr_dim < &(shape_dim - 1) {
+                new_shape[internal_counter] = *curr_dim;
+                break;
+            }
+            else{
+                new_shape[internal_counter] = 0;
+            }
+            internal_counter += 1;
+        }
+        new_shape.reverse();
+        Some(new_shape)
+    }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -407,3 +434,67 @@ pub fn broadcast(
         broadcasted_rhs_strides,
     ))
 }
+
+
+/*
+impl<T> Index<&[usize]> for Matrix<T> where T: Clone{
+    type Output = Option<T>;
+
+    fn index(&self, idx: &[usize]) -> &Self::Output {
+        match self.get_physical_idx(&idx.to_vec()) {
+            Ok(val) => &Some(self.data[val].clone()),
+            Err(_) => &None
+        }
+    }
+}
+*/
+/*
+pub struct MatrixIter<'a, T> {
+    pub mat: &'a Matrix<T>,
+    pub index: Vec<usize>,
+}
+
+impl<'a, T> Iterator for MatrixIter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let dims = self.mat.shape();
+        let mut i = self.mat.shape().len() - 1;
+        while i >= 0 {
+            if self.index[i] + 1 < dims[i] {
+                self.index[i] += 1;
+                break;
+            } else {
+                self.index[i] = 0;
+                i -= 1;
+            }
+        }
+
+        if i < 0 {
+            None
+        }
+        else {
+            //let index = self.index.iter().enumerate().fold(0, |acc, (i, &x)| acc + x * self.mat.dims[i..].iter().product::<usize>());
+            Some(&self.mat.get(&self.index).unwrap())
+        }
+    }
+}
+
+impl<T> Iterator for Matrix<T>{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        MatrixIter{mat: &self, index: vec![0; self.shape().len()]}.next()
+    }
+}
+
+
+impl<T: 'static> IntoIterator for Matrix<T>{
+    type Item = &'static T;
+    type IntoIter= MatrixIter<'static, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        MatrixIter { mat: &self, index: vec![0; self.shape().len()] }
+    }
+}
+*/

@@ -109,7 +109,7 @@ mod test_matrix_functionality {
         );
     }
 
-    // TODO: Add more tests
+    // TODO: Add more matrix_tests
     #[test]
     fn test_broadcasting() {
         match matrix::broadcast(&vec![3], Layout::ColumnMajor, &vec![3, 1], Layout::RowMajor) {
@@ -188,6 +188,11 @@ mod test_matrix_functionality {
         assert_eq!(mat.get(&vec![1, 1]).unwrap(), &10);
         assert_eq!(mat.get(&vec![2, 0]).unwrap(), &6);
         assert_eq!(mat.get(&vec![2, 1]).unwrap(), &12);
+    }
+
+    #[test]
+    fn test_calc_next_idx(){
+        //println!("{:?}", calc_next_idx(&vec![3, 3], &vec![2,1]))
     }
 }
 
