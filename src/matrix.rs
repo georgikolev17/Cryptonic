@@ -1,5 +1,5 @@
-use std::ops::{Add, Index};
-use std::thread::current;
+//use std::ops::{Add, Index};
+//use std::ptr;
 use super::{errors::MatrixError, layout::Layout};
 
 #[derive(Debug, PartialEq)]
@@ -9,10 +9,9 @@ pub struct Matrix<T> {
     pub data: Vec<T>,
     pub layout: Layout,
     pub size: usize,
-    // pub matrix_iterator: MatrixIter<'a, T>
 }
 
-impl<T> Matrix<T> {
+impl<T> Matrix<T>{
     /// Constructs a new, non-empty Matrix<T> where cells are set to `T::default`.
     /// Use `Matrix::from_iter` if you want to set the matrix from an iterator.
     ///
@@ -163,17 +162,14 @@ impl<T> Matrix<T> {
     /// println!("{:?}", mat.check_bounds(&vec![3, 4]).err()); // Prints Error because !3<3 && !4<4
     /// println!("{:?}", mat.check_bounds(&vec![2, 3]).unwrap()); // Prints () because 2<3 && 3<4
     /// ```
-    pub fn check_bounds(&self, idx: &Vec<usize>) -> Result<(), MatrixError> {
+    pub fn check_bounds(&self, idx: &Vec<usize>) -> Result<bool, MatrixError> {
         if idx.len() != self.shape.len() {
             return Err(MatrixError::DimError);
         }
-        let _size: usize = idx.len();
-        for i in 0.._size {
-            if idx[i] >= self.shape[i] {
-                return Err(MatrixError::OutOfBounds);
-            }
+        match !idx.iter().zip(self.shape.iter()).any(|(x, y)| x >= y) {
+            true => Ok(true),
+            false => Err(MatrixError::OutOfBounds),
         }
-        return Ok(());
     }
 
     /// Returns the physical id in the self.data vector
@@ -190,7 +186,7 @@ impl<T> Matrix<T> {
     pub fn get_physical_idx(&self, idx: &Vec<usize>) -> Result<usize, MatrixError> {
         let mut return_val: usize = 0;
         match self.check_bounds(idx) {
-            Ok(()) => {
+            Ok(_) => {
                 for i in 0..idx.len() {
                     return_val += idx[i] * self.strides[i];
                 }
@@ -302,39 +298,6 @@ impl<T> Matrix<T> {
             Layout::ColumnMajor => self.layout = Layout::RowMajor,
         }
     }
-
-    pub fn calc_next_idx(&self, current_idx: &Vec<usize>) -> Option<Vec<usize>>{
-
-        let mut new_shape: Vec<usize> = current_idx.clone();
-        let mut _shape = self.shape().clone();
-        let mut _current_idx = current_idx.clone();
-
-        new_shape.reverse();
-        _shape.reverse();
-        _current_idx.reverse();
-
-        let mut internal_counter = 0;
-        for (curr_dim, shape_dim) in _current_idx.iter().zip(_shape.iter()) {
-            if curr_dim < &(shape_dim - 1) {
-                new_shape[internal_counter] = *curr_dim;
-                break;
-            }
-            else{
-                new_shape[internal_counter] = 0;
-            }
-            internal_counter += 1;
-        }
-        new_shape.reverse();
-        Some(new_shape)
-    }
-
-    pub fn is_index_in_bounds(&self, index : &Vec<usize>) -> bool {
-        if index.len() != self.shape.len() {
-            return false;
-        }
-        !index.iter().zip(self.shape.iter()).any(|(x, y)| x>=y)
-
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -444,36 +407,71 @@ pub fn broadcast(
     ))
 }
 
+//Todo: fix
+pub fn check_concat_dims(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> bool{
+
+    let mut internal_counter = 0;
+    for (l_i, r_i) in lhs.iter().zip(rhs.iter()){
+        if internal_counter == axis {
+            println!("{:?}", internal_counter);
+            println!("{}, {}", l_i, r_i);
+            continue;
+        }
+        if l_i != r_i {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn concat<'a, T: 'a>(lhs: &'a Matrix<T>, rhs: &'a Matrix<T>, axis: usize) -> Result<Matrix<T>, MatrixError>{
+    Err(MatrixError::NotImplementedError)
+}
 
 /*
-impl<T> Index<&[usize]> for Matrix<T> where T: Clone{
-    type Output = Option<T>;
+impl<'a, T: 'a> Index<&'static [usize]> for Matrix<T>{
+    type Output = Option<&'a T>;
 
-    fn index(&self, idx: &[usize]) -> &Self::Output {
-        match self.get_physical_idx(&idx.to_vec()) {
-            Ok(val) => &Some(self.data[val].clone()),
+    fn index(Self<'a>, idx: &'a [usize]) -> &Self::Output {
+        let mut _idx = idx.to_vec();
+        //let mut item: &T = &ptr::null();
+        match Self.check_bounds(&_idx){
+            Ok(_) => {
+                //item = self.get(&_idx).unwrap();
+                &Some(Self.get(&_idx).unwrap())
+            },
             Err(_) => &None
         }
+        //&Some(item)
     }
 }
 */
+
+// Make matrix_iter own the matrix
+
 pub struct MatrixIter<'a, T> {
     pub mat: &'a Matrix<T>,
     pub index: Vec<usize>,
-    pub current_el: Option<(&'a T)>,
+    pub current_el: Option<(&'a T, Vec<usize>)>,
     pub empty: bool,
 }
 
 impl<'a, T> Iterator for MatrixIter<'a, T> {
-    type Item = &'a T;
+    type Item = (&'a T, Vec<usize>);
 
-    fn next(&mut self) -> Option<(Self::Item)> {
-        if self.mat.is_index_in_bounds(&self.index) && !self.empty {
-            self.current_el = Some(&self.mat.get(&self.index).unwrap());
-            print!("{:?} -> ", self.index)
-        }
-        else {
-            return None;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.mat.check_bounds(&self.index) {
+            Ok(_) => {
+                if !self.empty {
+                    // index was bounds checked so any such related panics from self.mat.get()
+                    // indicate a bug.
+                    self.current_el = Some((&self.mat.get(&self.index).unwrap(), self.index.clone()));
+                    //print!("{:?} -> ", self.index)
+                }
+            },
+            Err(_) => {
+                return None;
+            }
         }
         let dims = self.mat.shape();
         let mut i = self.mat.shape().len() - 1;
@@ -487,32 +485,34 @@ impl<'a, T> Iterator for MatrixIter<'a, T> {
                     self.empty = true;
                     break;
                 }
-                i-=1;
+                i -= 1;
             }
         }
-        Some(self.current_el.unwrap())
+        self.current_el.clone()
     }
 }
-// impl<T> Iterator for Matrix<T>{
-//     type Item = T;
-//     let Mat_iterator = 'a MatrixIter{mat: &self, index: vec![0; self.shape().len()], current_el: Option::None, empty: false};
-//
-//     fn next(&mut self) -> Option<T> {
-//         let mut mat_iter = MatrixIter{mat: &self, index: vec![0; self.shape().len()], current_el: Option::None, empty: false};
-//         mat_iter.next()
-//     }
-// }
+/*
+impl<T> Iterator for Matrix<T>{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
 
 
-// impl<T: 'static> IntoIterator for Matrix<T>{
-//     type Item = &'static T;
-//     type IntoIter= MatrixIter<'static, T>;
-//
-//     fn into_iter(self) -> Self::IntoIter {
-//         MatrixIter {
-//             mat: &self,
-//             index: vec![0; self.shape().len()],
-//             current_el:
-//         }
-//     }
-// }
+
+impl<T: 'static> IntoIterator for Matrix<T>{
+    type Item = (&'static T, Vec<usize>);
+    type IntoIter= MatrixIter<'static, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        MatrixIter {
+            mat: &self,
+            index: vec![0; self.shape().len()],
+            current_el: None,
+            empty: false
+        }
+    }
+}
+*/

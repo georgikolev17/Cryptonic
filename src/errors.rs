@@ -13,6 +13,7 @@ pub enum MatrixError {
     ShapeError,
     OutOfBounds,
     ReshapeError,
+    NotImplementedError
 }
 
 impl fmt::Display for MatrixError {
@@ -30,7 +31,8 @@ impl fmt::Display for MatrixError {
             ),
             MatrixError::ShapeError => write!(f, "Matrix must have the same shape in all dims except the last dimension"),
             MatrixError::OutOfBounds => write!(f, "Indices are out of bounds for the matrix"),
-            MatrixError::ReshapeError => write!(f, "Matrix cannot be reshaped into given shape")
+            MatrixError::ReshapeError => write!(f, "Matrix cannot be reshaped into given shape"),
+            MatrixError::NotImplementedError => write!(f, "Method or function not implemented")
         }
     }
 }
