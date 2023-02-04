@@ -407,17 +407,18 @@ pub fn broadcast(
     ))
 }
 
-//Todo: fix
-pub fn check_concat_dims(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> bool{
 
-    let mut internal_counter = 0;
-    for (l_i, r_i) in lhs.iter().zip(rhs.iter()){
-        if internal_counter == axis {
-            println!("{:?}", internal_counter);
-            println!("{}, {}", l_i, r_i);
+pub fn check_concat_dims(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> bool{
+    if lhs.len() != rhs.len() {
+        return false;
+    }
+    let len = lhs.len();
+
+    for i in 0..len{
+        if i == axis {
             continue;
         }
-        if l_i != r_i {
+        if lhs[i] != rhs[i]{
             return false;
         }
     }
