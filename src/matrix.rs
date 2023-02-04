@@ -298,6 +298,19 @@ impl<T> Matrix<T>{
             Layout::ColumnMajor => self.layout = Layout::RowMajor,
         }
     }
+
+    /// Reshapes the matrix
+    ///
+    /// # Examples
+    /// ```
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat : Matrix<i32> = Matrix::new(vec![3, 2], Layout::RowMajor);
+    /// mat.flatten();
+    /// assert_eq!(mat.shape, vec![6]);
+    /// ```
+    pub fn flatten(&mut self) -> Result<(), MatrixError> {
+        self.reshape(&vec![self.shape.iter().fold(1, |acc, x| acc * x)])
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
