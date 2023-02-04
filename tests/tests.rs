@@ -228,8 +228,8 @@ mod test_matrix_functionality {
         let lhs: Matrix<i32> = Matrix::from_iter(vec![3, 2, 4], 1.., Layout::RowMajor);
         let rhs: Matrix<i32> = Matrix::from_iter(vec![3, 2, 5], 1.., Layout::RowMajor);
         //check_concat_dims(lhs.shape(), rhs.shape(), 2);
-        assert!(!check_concat_dims(lhs.shape(), rhs.shape(), 2));
-        assert!(check_concat_dims(lhs.shape(), rhs.shape(), 0));
+        assert!(check_concat_dims(lhs.shape(), rhs.shape(), 2));
+        assert!(!check_concat_dims(lhs.shape(), rhs.shape(), 0));
         assert!(!check_concat_dims(lhs.shape(), rhs.shape(), 1));
     }
 
