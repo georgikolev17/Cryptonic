@@ -429,17 +429,37 @@ pub fn broadcast(
     ))
 }
 
-/// This function concatenates two matrices by given axis
+/*
+/// Given two matrices the function concatenates them if they comply with the check_concat_dims()
+/// function or returns an error stating that the given matrices differ by more than just the axis.
+/// For up,down,left and right concat change the place of lhs and rhs or first transpose them. It's
+/// up to the API user how he feeds the data to us.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
 /// # Examples
 /// ```
-/// use Cryptonic::layout::Layout;
-/// use Cryptonic::matrix::{concat, Matrix};
-/// let mat1 = Matrix::from_iter(vec![2, 3], 0.., Layout::RowMajor);
-/// let mat2 = Matrix::from_iter(vec![2, 3], 1.., Layout::RowMajor);
+/// use Cryptonic::{layout::Layout, matrix::*};
+/// let mut rhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 4], 1..,Layout::RowMajor);
 ///
-/// let mat_concat = concat(mat1, mat2, 0).unwrap();
-/// println!("{:?}", mat_concat);
+/// let mut x = concat(rhs, lhs, 1);
+/// match x {
+///     Ok((val, _rhs, _lhs)) => {
+///         let mut matrix_iter = MatrixIter {
+///             mat: &val,
+///             index: vec![0; val.shape().len()],
+///             current_el: None,
+///             empty: false,
+///         };
+///         for (item, idx) in matrix_iter {
+///             println!("{:?} -> {}", idx, item);
+///         }
+///     },
+///     Err(_) => {} // Shouldn't happen given these specific parameters
+/// }
 /// ```
+*/
 pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default{
     if !check_concat_dims(lhs.shape(), rhs.shape(), axis) {
         return Err(MatrixError::DimError);
@@ -481,7 +501,37 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
     }
     return Ok((f_matrix, lhs, rhs));
 }
-
+/*
+/// Given two matrices the function first checks if they're broadcastable. The broadcast function
+/// takes care of any dimensional issues. After we have broadcasted the matrices we then iterate
+/// through them and subtract the elements. Again we subtract rhs from lhs so be careful how you
+/// input them to the function.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+/// ```
+/// use Cryptonic::{layout::Layout, matrix::*};
+/// let mut rhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+///
+/// let mut x = subtract(rhs, lhs);
+/// match x {
+///     Ok((val, _rhs, _lhs)) => {
+///         let mut matrix_iter = MatrixIter {
+///             mat: &val,
+///             index: vec![0; val.shape().len()],
+///             current_el: None,
+///             empty: false,
+///         };
+///         for (item, idx) in matrix_iter {
+///             println!("{:?} -> {}", idx, item); // Should return all zeroes
+///         }
+///     },
+///     Err(_) => {} // Shouldn't happen given these specific parameters
+/// }
+/// ```
+*/
 pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Sub + Sub<Output = T>, <T as Sub>::Output: Clone + Default{
     let mut final_shape: Vec<usize> = vec![];
     match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
@@ -524,6 +574,36 @@ pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, 
     Ok((new_matrix, lhs, rhs))
 }
 
+/*
+/// Given two matrices the function first checks if they're broadcastable. The broadcast function
+/// takes care of any dimensional issues. After we have broadcasted the matrices we then iterate
+/// through them and add the elements.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+/// ```
+/// use Cryptonic::{layout::Layout, matrix::*};
+/// let mut rhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+///
+/// let mut x = add(rhs, lhs);
+/// match x {
+///     Ok((val, _rhs, _lhs)) => {
+///         let mut matrix_iter = MatrixIter {
+///             mat: &val,
+///             index: vec![0; val.shape().len()],
+///             current_el: None,
+///             empty: false,
+///         };
+///         for (item, idx) in matrix_iter {
+///             println!("{:?} -> {}", idx, item); // Should return all 2, 4, 6, etc.
+///         }
+///     },
+///     Err(_) => {} // Shouldn't happen given these specific parameters
+/// }
+/// ```
+*/
 pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Add + Add<Output = T>, <T as Add>::Output: Clone + Default{
     let mut final_shape: Vec<usize> = vec![];
     match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
@@ -567,8 +647,8 @@ pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matri
 }
 
 
-
-pub struct MatrixIter<'a, T> where T: Clone + Default{
+#[derive(Debug, Clone)]
+pub struct MatrixIter<'a, T> where T: Clone + Default + 'static{
     pub mat: &'a Matrix<T>,
     pub index: Vec<usize>,
     pub current_el: Option<(T, Vec<usize>)>,
@@ -594,7 +674,6 @@ impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
                 return None;
             }
         }
-        println!("{:?} -> {}", self.index, self.empty);
         let dims = self.mat.shape();
         let mut i = self.mat.shape().len() - 1;
         while i >= 0 {
