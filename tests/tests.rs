@@ -236,6 +236,7 @@ mod test_matrix_functionality {
     #[test]
     fn test_flatten() {
         let mut mat : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut mat : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
         mat.flatten();
         assert_eq!(mat.shape, vec![6]);
         assert_eq!(mat.strides, vec![1]);

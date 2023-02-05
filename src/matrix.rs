@@ -429,7 +429,17 @@ pub fn broadcast(
     ))
 }
 
-
+/// This function concatenates two matrices by given axis
+/// # Examples
+/// ```
+/// use Cryptonic::layout::Layout;
+/// use Cryptonic::matrix::{concat, Matrix};
+/// let mat1 = Matrix::from_iter(vec![2, 3], 0.., Layout::RowMajor);
+/// let mat2 = Matrix::from_iter(vec![2, 3], 1.., Layout::RowMajor);
+///
+/// let mat_concat = concat(mat1, mat2, 0).unwrap();
+/// println!("{:?}", mat_concat);
+/// ```
 pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default{
     if !check_concat_dims(lhs.shape(), rhs.shape(), axis) {
         return Err(MatrixError::DimError);
@@ -451,7 +461,7 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
     let f_shape = calc_concat_shape(lhs.shape(), rhs.shape(), axis).unwrap();
     let mut f_matrix: Matrix<T> = Matrix::new(f_shape, Layout::RowMajor);
 
-    for (item, idx) in lhs_iter{
+    for (item, idx) in lhs_iter {
         match f_matrix.set(&idx, item) {
             Ok(_) => {},
             Err(err) => {
@@ -460,7 +470,7 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
         }
     }
 
-    for (item, mut idx) in rhs_iter{
+    for (item, mut idx) in rhs_iter {
         idx[axis] += lhs.shape()[axis] - 1;
         match f_matrix.set(&idx, item) {
             Ok(_) => {},
@@ -575,13 +585,16 @@ impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
                     // index was bounds checked so any such related panics from self.mat.get()
                     // indicate a bug.
                     self.current_el = Some((self.mat.get_copy(&self.index).unwrap(), self.index.clone()));
-                    //print!("{:?} -> ", self.index)
+                }
+                else {
+                    return None;
                 }
             },
             Err(_) => {
                 return None;
             }
         }
+        println!("{:?} -> {}", self.index, self.empty);
         let dims = self.mat.shape();
         let mut i = self.mat.shape().len() - 1;
         while i >= 0 {
