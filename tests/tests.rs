@@ -212,15 +212,17 @@ mod test_matrix_functionality {
     // TODO: Add assertions
     #[test]
     fn test_iter() {
-        let mat: Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut mat3 = Matrix::from_iter(vec![2, 3], 0.., Layout::RowMajor);
+
         let mut matrix_iter = MatrixIter {
-            mat: &mat,
-            index: vec![0; mat.shape().len()],
+            mat: &mat3,
+            index: vec![0; mat3.shape().len()],
             current_el: None,
             empty: false,
         };
-        while !matrix_iter.empty {
-            println!("{:?}", matrix_iter.next());
+
+        for (item, idx) in matrix_iter {
+            println!("{idx:?} -> {item}");
         }
     }
     #[test]
@@ -241,6 +243,7 @@ mod test_matrix_functionality {
         assert_eq!(mat.shape, vec![6]);
         assert_eq!(mat.strides, vec![1]);
     }
+
 }
 
 

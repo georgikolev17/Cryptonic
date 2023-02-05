@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::ops::{Add, Index, Sub};
 //use std::ptr;
 use super::{errors::MatrixError, layout::Layout, utils::*};
@@ -486,7 +487,7 @@ pub fn broadcast(
 /// }
 /// ```
 */
-pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default{
+pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Debug {
     if !check_concat_dims(lhs.shape(), rhs.shape(), axis) {
         return Err(MatrixError::DimError);
     }
@@ -507,7 +508,7 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
     let f_shape = calc_concat_shape(lhs.shape(), rhs.shape(), axis).unwrap();
     let mut f_matrix: Matrix<T> = Matrix::new(f_shape, Layout::RowMajor);
 
-    for (item, idx) in lhs_iter{
+    for (item, idx) in lhs_iter {
         match f_matrix.set(&idx, item) {
             Ok(_) => {},
             Err(err) => {
@@ -516,8 +517,8 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
         }
     }
 
-    for (item, mut idx) in rhs_iter{
-        idx[axis] += lhs.shape()[axis] - 1;
+    for (item, mut idx) in rhs_iter {
+        idx[axis] += lhs.shape()[axis];
         match f_matrix.set(&idx, item) {
             Ok(_) => {},
             Err(err) => {
