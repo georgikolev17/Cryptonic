@@ -44,7 +44,6 @@ pub fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
     shape.iter().copied().reduce(|a, b| a * b).unwrap()
 }
 
-
 /// Checks if the dimensions are concat-able. This is when they differ only by the dimension
 /// specified by the axis parameter.
 ///
@@ -74,14 +73,13 @@ pub fn check_concat_dims(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> boo
     true
 }
 
-
 /// Calculates the resulting shape of two concatenated matrices. What happens is that all of the
 /// dimensions other than the one specified by the axis parameter stay the same.
 /// Final_Matrix.shape()[axis] = lhs.shape()[axis]+rhs.shape()[axis]
 ///
 /// # Examples
 /// ```
-///
+/// use Cryptonic::utils::calc_size_from_shape;
 /// use Cryptonic::utils::calc_concat_shape;
 /// let vec_1 = vec![3, 4, 5];
 /// let vec_2 = vec![3, 2, 5];
@@ -96,4 +94,3 @@ pub fn calc_concat_shape(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> Opt
     f_vec[axis] += rhs[axis];
     return Some(f_vec);
 }
-
