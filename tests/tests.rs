@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test_matrix_functionality {
     use core::prelude;
-    use Cryptonic::{errors::*, layout::*, matrix::*};
+    use Cryptonic::{errors::*, layout::*, matrix::*, utils::*};
 
     #[test]
     fn test_row_major_gen() {

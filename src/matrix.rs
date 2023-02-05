@@ -1,6 +1,6 @@
-//use std::ops::{Add, Index};
+use std::ops::{Add, Index, Sub};
 //use std::ptr;
-use super::{errors::MatrixError, layout::Layout};
+use super::{errors::MatrixError, layout::Layout, utils::*};
 
 #[derive(Debug, PartialEq)]
 pub struct Matrix<T> {
@@ -11,7 +11,7 @@ pub struct Matrix<T> {
     pub size: usize,
 }
 
-impl<T> Matrix<T>{
+impl<T> Matrix<T> where T: Clone + Default {
     /// Constructs a new, non-empty Matrix<T> where cells are set to `T::default`.
     /// Use `Matrix::from_iter` if you want to set the matrix from an iterator.
     ///
@@ -25,8 +25,8 @@ impl<T> Matrix<T>{
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// ```
     pub fn new(_shape: Vec<usize>, layout: Layout) -> Matrix<T>
-    where
-        T: Default,
+        where
+            T: Default,
     {
         Matrix::from_iter(_shape, (0..).map(|_| T::default()), layout)
     }
@@ -44,7 +44,7 @@ impl<T> Matrix<T>{
     /// ```
     pub fn from_iter(
         _shape: Vec<usize>,
-        _data: impl IntoIterator<Item = T>,
+        _data: impl IntoIterator<Item=T>,
         _layout: Layout,
     ) -> Matrix<T> {
         assert!(!_shape.is_empty());
@@ -86,7 +86,9 @@ impl<T> Matrix<T>{
             size: _temp_shape.iter().copied().reduce(|a, b| a * b).unwrap(),
         }
     }
-
+}
+// Implements getters and setters for fields other than the data.
+impl<T> Matrix<T>  where T: Clone + Default {
     /// Returns the full size of a matrix
     ///
     /// # Examples
@@ -150,6 +152,41 @@ impl<T> Matrix<T>{
         &self.strides
     }
 
+    /// Directly changes the strides of the matrix. This should be used with extreme caution
+    /// mostly with the broadcast() function since it calculates the rest and should be used in
+    /// combination with set_shape().
+    ///
+    /// # Examples
+    /// ```
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
+    /// mat.set_strides(&vec![3, 4]);
+    /// println!("{:?}", mat.strides()); // Prints [3, 4]
+    /// ```
+    pub fn set_strides(&mut self, _strides: &Vec<usize>) {
+        self.strides = (*_strides.clone()).to_owned();
+    }
+
+    /// Directly changes the shape of the matrix. This should be used with extreme caution
+    /// mostly with the broadcast() function since it calculates the rest and should be used in
+    /// combination with set_strides(). Essentially it's the same as reshape() but it doesn't
+    /// recalculate or check the strides which is why it's so dangerous.
+    /// # Examples
+    /// ```
+    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
+    /// mat.set_shape(&vec![12]);
+    /// println!("{:?}", mat.shape()); // Prints [3, 4]
+    /// ```
+    pub fn set_shape(&mut self, _shape: &Vec<usize>) {
+        self.shape = (*_shape.clone()).to_owned();
+    }
+}
+
+// Implements functions that are directly used by other functions for example check_bounds()
+// shouldn't be used directly by API users which is why in the future it might go private.
+// The same goes for get_physical_id()
+impl<T> Matrix<T>  where T: Clone + Default {
     /// This is a utilities function, which is used any time a index is given as an input.
     /// Takes a idx: Vec<usize> and checks that the number of dimensions is the same as the
     /// matrix. Then for each element in idx it's checked that it's smaller than its corresponding
@@ -196,7 +233,10 @@ impl<T> Matrix<T>{
             Err(err) => Err(err),
         }
     }
+}
 
+// Implements the functions which get and set data.
+impl<T> Matrix<T>  where T: Clone + Default {
     /// Returns a non-mutable reference to a specific element in the matrix. On input an idx, we
     /// bound_check it and then return the element at that index.
     ///
@@ -211,6 +251,17 @@ impl<T> Matrix<T>{
     pub fn get(&self, idx: &Vec<usize>) -> Result<&T, MatrixError> {
         match self.get_physical_idx(idx) {
             Ok(physical_idx) => Ok(&self.data[physical_idx]),
+            Err(m_err) => Err(m_err),
+        }
+    }
+
+    /// Same as self.get(), but returns a copy. Since the functionality is the same
+    /// I haven't included examples
+    ///
+    // TODO: Add slicing
+    pub fn get_copy(&self, idx: &Vec<usize>) -> Result<T, MatrixError> {
+        match self.get_physical_idx(idx) {
+            Ok(physical_idx) => Ok(self.data[physical_idx].clone()),
             Err(m_err) => Err(m_err),
         }
     }
@@ -249,7 +300,10 @@ impl<T> Matrix<T>{
             Err(m_err) => Err(m_err),
         }
     }
+}
 
+// Implements the apply and apply_mut methods.
+impl<T> Matrix<T>  where T: Clone + Default {
     /// Apply a function to all cells of the matrix.
     /// Cells are provided as immutable references to the function,
     /// if you want to modify the cells, use `apply_mut`.
@@ -288,7 +342,10 @@ impl<T> Matrix<T>{
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
         self.data.iter_mut().for_each(|n| func(n));
     }
+}
 
+// Implements structure changing methods
+impl<T> Matrix<T>  where T: Clone + Default {
     /// Transposes the matrix. Reverses the axis.
     pub fn transpose(&mut self) {
         self.shape.reverse();
@@ -298,52 +355,17 @@ impl<T> Matrix<T>{
             Layout::ColumnMajor => self.layout = Layout::RowMajor,
         }
     }
+
+    pub fn flatten(&mut self){
+        match self.reshape(&vec![self.size()]) {
+            Ok(_) => {},
+            Err(err) => panic!("{}", err)
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Calculates strides from a given shape and layout.
-///
-/// # Examples
-/// ```
-/// use Cryptonic::{matrix::Matrix, layout::Layout};
-/// use Cryptonic::matrix::calc_strides_from_shape;
-/// let mut val = calc_strides_from_shape(&vec![3, 4], Layout::RowMajor);
-/// println!("{:?}", val); // Prints [4, 1]
-/// ```
-/// TODO: Add tests
-pub fn calc_strides_from_shape(shape: &Vec<usize>, layout: Layout) -> Vec<usize> {
-    let mut data_size: usize = 1;
-    let mut strides: Vec<usize> = vec![0; shape.len()];
-
-    if layout == Layout::RowMajor {
-        for i in (1..(shape.len() + 1)).rev() {
-            strides[i - 1] = data_size;
-            data_size = strides[i - 1] * shape[i - 1];
-        }
-    }
-    // For Column Major Layout
-    else {
-        for i in 0..shape.len() {
-            strides[i] = data_size;
-            data_size = strides[i] * shape[i];
-        }
-    }
-    strides
-}
-
-/// Calculates strides from a given shape and layout.
-///
-/// # Examples
-/// ```
-/// use Cryptonic::matrix::calc_size_from_shape;
-/// let mut val = calc_size_from_shape(&vec![3, 4]);
-/// println!("{}", val); // Prints 12, because 12 = 3*4
-/// ```
-/// TODO: Add tests
-pub fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
-    shape.iter().copied().reduce(|a, b| a * b).unwrap()
-}
 
 /// Given two matrices the function broadcast either makes their shapes compatible or returns
 /// an error stating that the given matrices aren't broadcastable.
@@ -408,57 +430,143 @@ pub fn broadcast(
 }
 
 
-pub fn check_concat_dims(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> bool{
-    if lhs.len() != rhs.len() {
-        return false;
+pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default{
+    if !check_concat_dims(lhs.shape(), rhs.shape(), axis) {
+        return Err(MatrixError::DimError);
     }
-    let len = lhs.len();
+    let lhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &lhs,
+        index: vec![0; lhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+    let rhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &rhs,
+        index: vec![0; rhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+    // Here unwrap is used since the same check that gets run on calc_concat_shape()
+    // got run above so if it returns false the code wouldn't get to here.
+    let f_shape = calc_concat_shape(lhs.shape(), rhs.shape(), axis).unwrap();
+    let mut f_matrix: Matrix<T> = Matrix::new(f_shape, Layout::RowMajor);
 
-    for i in 0..len{
-        if i == axis {
-            continue;
-        }
-        if lhs[i] != rhs[i]{
-            return false;
+    for (item, idx) in lhs_iter{
+        match f_matrix.set(&idx, item) {
+            Ok(_) => {},
+            Err(err) => {
+                return Err(err);
+            }
         }
     }
-    true
+
+    for (item, mut idx) in rhs_iter{
+        idx[axis] += lhs.shape()[axis] - 1;
+        match f_matrix.set(&idx, item) {
+            Ok(_) => {},
+            Err(err) => {
+                return Err(err);
+            }
+        }
+    }
+    return Ok((f_matrix, lhs, rhs));
 }
 
-pub fn concat<'a, T: 'a>(lhs: &'a Matrix<T>, rhs: &'a Matrix<T>, axis: usize) -> Result<Matrix<T>, MatrixError>{
-    Err(MatrixError::NotImplementedError)
-}
-
-/*
-impl<'a, T: 'a> Index<&'static [usize]> for Matrix<T>{
-    type Output = Option<&'a T>;
-
-    fn index(Self<'a>, idx: &'a [usize]) -> &Self::Output {
-        let mut _idx = idx.to_vec();
-        //let mut item: &T = &ptr::null();
-        match Self.check_bounds(&_idx){
-            Ok(_) => {
-                //item = self.get(&_idx).unwrap();
-                &Some(Self.get(&_idx).unwrap())
-            },
-            Err(_) => &None
+pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Sub + Sub<Output = T>, <T as Sub>::Output: Clone + Default{
+    let mut final_shape: Vec<usize> = vec![];
+    match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
+        Ok((_shape, _lhs_strides, _rhs_strides)) => {
+            lhs.set_shape(&_shape);
+            rhs.set_shape(&_shape);
+            lhs.set_strides(&_lhs_strides);
+            rhs.set_strides(&_rhs_strides);
+            final_shape = _shape;
+        },
+        Err(err) => {
+            return Err(err);
         }
-        //&Some(item)
     }
+
+    let lhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &lhs,
+        index: vec![0; lhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+    let rhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &rhs,
+        index: vec![0; rhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+
+    let mut new_matrix = Matrix::new(final_shape, Layout::RowMajor);
+
+    for ((lhs_item, lhs_index), (rhs_item, rhs_index)) in lhs_iter.zip(rhs_iter){
+        assert_eq!(lhs_index, rhs_index);
+        match new_matrix.set(&lhs_index, lhs_item - rhs_item) {
+            Ok(_) => {},
+            Err(err) => {
+                return Err(err);
+            }
+        }
+    }
+    Ok((new_matrix, lhs, rhs))
 }
-*/
 
-// Make matrix_iter own the matrix
+pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Add + Add<Output = T>, <T as Add>::Output: Clone + Default{
+    let mut final_shape: Vec<usize> = vec![];
+    match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
+        Ok((_shape, _lhs_strides, _rhs_strides)) => {
+            lhs.set_shape(&_shape);
+            rhs.set_shape(&_shape);
+            lhs.set_strides(&_lhs_strides);
+            rhs.set_strides(&_rhs_strides);
+            final_shape = _shape;
+        },
+        Err(err) => {
+            return Err(err);
+        }
+    }
 
-pub struct MatrixIter<'a, T> {
+    let lhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &lhs,
+        index: vec![0; lhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+    let rhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &rhs,
+        index: vec![0; rhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+
+    let mut new_matrix = Matrix::new(final_shape, Layout::RowMajor);
+
+    for ((lhs_item, lhs_index), (rhs_item, rhs_index)) in lhs_iter.zip(rhs_iter){
+        assert_eq!(lhs_index, rhs_index);
+        match new_matrix.set(&lhs_index, lhs_item + rhs_item) {
+            Ok(_) => {},
+            Err(err) => {
+                return Err(err);
+            }
+        }
+    }
+    Ok((new_matrix, lhs, rhs))
+}
+
+
+
+pub struct MatrixIter<'a, T> where T: Clone + Default{
     pub mat: &'a Matrix<T>,
     pub index: Vec<usize>,
-    pub current_el: Option<(&'a T, Vec<usize>)>,
+    pub current_el: Option<(T, Vec<usize>)>,
     pub empty: bool,
 }
 
-impl<'a, T> Iterator for MatrixIter<'a, T> {
-    type Item = (&'a T, Vec<usize>);
+impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
+    type Item = (T, Vec<usize>);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.mat.check_bounds(&self.index) {
@@ -466,7 +574,7 @@ impl<'a, T> Iterator for MatrixIter<'a, T> {
                 if !self.empty {
                     // index was bounds checked so any such related panics from self.mat.get()
                     // indicate a bug.
-                    self.current_el = Some((&self.mat.get(&self.index).unwrap(), self.index.clone()));
+                    self.current_el = Some((self.mat.get_copy(&self.index).unwrap(), self.index.clone()));
                     //print!("{:?} -> ", self.index)
                 }
             },
