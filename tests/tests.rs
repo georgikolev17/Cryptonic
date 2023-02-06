@@ -244,6 +244,76 @@ mod test_matrix_functionality {
         assert_eq!(mat.strides, vec![1]);
     }
 
+    // Test matrix operations
+
+    #[test]
+    fn test_add() {
+        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let (mat_add, mat1, mat2) = add(mat1, mat2).unwrap();
+        assert_eq!(mat_add.data, vec![2, 4, 6, 8, 10, 12]);
+        assert_eq!(mat_add.shape, vec![3, 2]);
+    }
+
+    #[test]
+    fn test_if_add_throws_error_when_bounds_are_incompatible() {
+        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 1.., Layout::RowMajor);
+        match subtract(mat1, mat2) {
+            Ok((_, _, _)) => assert!(false),
+            Err(err) => assert_eq!(MatrixError::BroadcastError, err)
+        }
+    }
+
+    #[test]
+    fn test_subtract() {
+        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 0.., Layout::RowMajor);
+        let (mat_subtract, mat1, mat2) = subtract(mat1, mat2).unwrap();
+        assert_eq!(mat_subtract.data, vec![1; 6]);
+        assert_eq!(mat_subtract.shape, vec![3, 2]);
+    }
+
+    #[test]
+    fn test_if_subtract_throws_error_when_bounds_are_incompatible() {
+        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 0.., Layout::RowMajor);
+        match subtract(mat1, mat2) {
+            Ok((_, _, _)) => assert!(false),
+            Err(err) => assert_eq!(MatrixError::BroadcastError, err)
+        }
+    }
+
+    #[test]
+    fn test_concat() {
+        let mut mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
+        let mut mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
+
+        let (mat_concat, mat1, mat2) = concat(mat1, mat2, 0).unwrap();
+
+        assert_eq!(mat_concat.data, vec![0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+        assert_eq!(mat_concat.shape, vec![5, 3]);
+
+        // Check if concat works for other axis too
+        let mut mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
+        let mut mat2 = Matrix::from_iter(vec![2, 3], vec![1; 6], Layout::RowMajor);
+
+        let (mat_concat, mat1, mat2) = concat(mat1, mat2, 1).unwrap();
+
+        assert_eq!(mat_concat.data, vec![0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1]);
+        assert_eq!(mat_concat.shape, vec![2, 6]);
+    }
+
+    #[test]
+    fn test_if_concat_throws_error_when_dimensions_are_incompatible() {
+        let mut mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
+        let mut mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
+
+        match concat(mat1, mat2, 1) {
+            Ok(_) => assert!(false),
+            Err(err) => assert_eq!(MatrixError::DimError, err),
+        }
+    }
 }
 
 
