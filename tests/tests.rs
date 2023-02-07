@@ -2,7 +2,7 @@ extern crate core;
 
 #[cfg(test)]
 mod test_matrix_functionality {
-    use core::prelude;
+    
     use Cryptonic::{errors::*, layout::*, matrix::*, utils::*};
 
     #[test]
@@ -35,10 +35,10 @@ mod test_matrix_functionality {
         assert_eq!(mat.size(), 3 * 4 * 7);
 
         let mat: Matrix<i32> = Matrix::new(vec![2, 3, 1, 1, 2], Layout::RowMajor);
-        assert_eq!(mat.size(), 2 * 3 * 1 * 1 * 2);
+        assert_eq!(mat.size(), 2 * 3 * 2);
 
         let mat: Matrix<i32> = Matrix::new(vec![1, 7, 2], Layout::ColumnMajor);
-        assert_eq!(mat.size(), 1 * 7 * 2);
+        assert_eq!(mat.size(), 7 * 2);
     }
 
     #[test]
@@ -60,7 +60,7 @@ mod test_matrix_functionality {
         let mut mat: Matrix<i32> = Matrix::new(vec![100], Layout::RowMajor);
 
         assert_eq!(Err(MatrixError::ReshapeError), mat.reshape(&vec![20, 6]));
-        let l = mat.reshape(&vec![20, 5]);
+        let _l = mat.reshape(&vec![20, 5]);
         assert_eq!(mat.shape(), &vec![20, 5]);
     }
 
@@ -109,7 +109,7 @@ mod test_matrix_functionality {
         //
         let (x, y, z) = (1, 2, 3);
         assert_eq!(
-            Ok(1 * 21 + 2 * 7 + 3 * 1),
+            Ok(21 + 2 * 7 + 3),
             mat.get_physical_idx(&vec![x, y, z])
         );
     }
@@ -130,7 +130,7 @@ mod test_matrix_functionality {
     #[test]
     fn test_get() {
         let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 1.., Layout::RowMajor);
-        mat.apply_mut(|mut n| *n *= 2);
+        mat.apply_mut(|n| *n *= 2);
 
         assert_eq!(Ok(&14), mat.get(&vec![1, 2]));
         assert_eq!(Err(MatrixError::OutOfBounds), mat.get(&vec![3, 4]));
@@ -139,7 +139,7 @@ mod test_matrix_functionality {
     #[test]
     fn test_get_mut() {
         let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 1.., Layout::RowMajor);
-        mat.apply_mut(|mut n| *n *= 2);
+        mat.apply_mut(|n| *n *= 2);
 
         let x = match mat.get_mut(&vec![0, 0]) {
             Ok(val) => val,
@@ -165,7 +165,7 @@ mod test_matrix_functionality {
 
     #[test]
     fn test_apply() {
-        let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 6], 1.., Layout::RowMajor);
+        let mat: Matrix<i32> = Matrix::from_iter(vec![3, 6], 1.., Layout::RowMajor);
         let mut sum = 0;
         mat.apply(|n| sum += *n);
         println!("{:#?}", mat);
@@ -175,7 +175,7 @@ mod test_matrix_functionality {
     #[test]
     fn test_apply_mut() {
         let mut mat: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1.., Layout::RowMajor);
-        mat.apply_mut(|mut n| *n *= 2);
+        mat.apply_mut(|n| *n *= 2);
 
         assert_eq!(mat.data, vec![2, 4, 6, 8]);
     }
@@ -214,9 +214,9 @@ mod test_matrix_functionality {
     // TODO: Add assertions
     #[test]
     fn test_iter() {
-        let mut mat3 = Matrix::from_iter(vec![2, 3], 0.., Layout::RowMajor);
+        let mat3 = Matrix::from_iter(vec![2, 3], 0.., Layout::RowMajor);
 
-        let mut matrix_iter = MatrixIter {
+        let matrix_iter = MatrixIter {
             mat: &mat3,
             index: vec![0; mat3.shape().len()],
             current_el: None,
@@ -239,7 +239,7 @@ mod test_matrix_functionality {
 
     #[test]
     fn test_flatten() {
-        let mut mat : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let _mat : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
         let mut mat : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
         mat.flatten();
         assert_eq!(mat.shape, vec![6]);
@@ -250,17 +250,17 @@ mod test_matrix_functionality {
 
     #[test]
     fn test_add() {
-        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
-        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
-        let (mat_add, mat1, mat2) = add(mat1, mat2).unwrap();
+        let mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mat2 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let (mat_add, _mat1, _mat2) = add(mat1, mat2).unwrap();
         assert_eq!(mat_add.data, vec![2, 4, 6, 8, 10, 12]);
         assert_eq!(mat_add.shape, vec![3, 2]);
     }
 
     #[test]
     fn test_if_add_throws_error_when_bounds_are_incompatible() {
-        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
-        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 1.., Layout::RowMajor);
+        let mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 1.., Layout::RowMajor);
         match subtract(mat1, mat2) {
             Ok((_, _, _)) => assert!(false),
             Err(err) => assert_eq!(MatrixError::BroadcastError, err)
@@ -269,17 +269,17 @@ mod test_matrix_functionality {
 
     #[test]
     fn test_subtract() {
-        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
-        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 0.., Layout::RowMajor);
-        let (mat_subtract, mat1, mat2) = subtract(mat1, mat2).unwrap();
+        let mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mat2 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 0.., Layout::RowMajor);
+        let (mat_subtract, _mat1, _mat2) = subtract(mat1, mat2).unwrap();
         assert_eq!(mat_subtract.data, vec![1; 6]);
         assert_eq!(mat_subtract.shape, vec![3, 2]);
     }
 
     #[test]
     fn test_if_subtract_throws_error_when_bounds_are_incompatible() {
-        let mut mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
-        let mut mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 0.., Layout::RowMajor);
+        let mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
+        let mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 0.., Layout::RowMajor);
         match subtract(mat1, mat2) {
             Ok((_, _, _)) => assert!(false),
             Err(err) => assert_eq!(MatrixError::BroadcastError, err)
@@ -288,19 +288,19 @@ mod test_matrix_functionality {
 
     #[test]
     fn test_concat() {
-        let mut mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
-        let mut mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
+        let mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
+        let mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
 
-        let (mat_concat, mat1, mat2) = concat(mat1, mat2, 0).unwrap();
+        let (mat_concat, _mat1, _mat2) = concat(mat1, mat2, 0).unwrap();
 
         assert_eq!(mat_concat.data, vec![0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
         assert_eq!(mat_concat.shape, vec![5, 3]);
 
         // Check if concat works for other axis too
-        let mut mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
-        let mut mat2 = Matrix::from_iter(vec![2, 3], vec![1; 6], Layout::RowMajor);
+        let mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
+        let mat2 = Matrix::from_iter(vec![2, 3], vec![1; 6], Layout::RowMajor);
 
-        let (mat_concat, mat1, mat2) = concat(mat1, mat2, 1).unwrap();
+        let (mat_concat, _mat1, _mat2) = concat(mat1, mat2, 1).unwrap();
 
         assert_eq!(mat_concat.data, vec![0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1]);
         assert_eq!(mat_concat.shape, vec![2, 6]);
@@ -308,8 +308,8 @@ mod test_matrix_functionality {
 
     #[test]
     fn test_if_concat_throws_error_when_dimensions_are_incompatible() {
-        let mut mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
-        let mut mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
+        let mat1 = Matrix::from_iter(vec![2, 3], vec![0; 6], Layout::RowMajor);
+        let mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
 
         match concat(mat1, mat2, 1) {
             Ok(_) => assert!(false),
@@ -363,9 +363,9 @@ mod test_matrix_functionality {
             Err(err) => panic!("{err}")
         }
 
-        let (matmul, mat1, mat2) = multiply_2d(mat1, mat2).unwrap();
+        let (matmul, _mat1, _mat2) = multiply_2d(mat1, mat2).unwrap();
 
-        let mut matrix_iter = MatrixIter {
+        let matrix_iter = MatrixIter {
             mat: &matmul,
             index: vec![0; matmul.shape().len()],
             current_el: None,

@@ -40,7 +40,7 @@ pub fn calc_strides_from_shape(shape: &Vec<usize>, layout: Layout) -> Vec<usize>
 /// println!("{}", val); // Prints 12, because 12 = 3*4
 /// ```
 /// TODO: Add tests
-pub fn calc_size_from_shape(shape: &Vec<usize>) -> usize {
+pub fn calc_size_from_shape(shape: &[usize]) -> usize {
     shape.iter().copied().reduce(|a, b| a * b).unwrap()
 }
 
@@ -92,5 +92,5 @@ pub fn calc_concat_shape(lhs: &Vec<usize>, rhs: &Vec<usize>, axis: usize) -> Opt
     }
     let mut f_vec = lhs.clone();
     f_vec[axis] += rhs[axis];
-    return Some(f_vec);
+    Some(f_vec)
 }

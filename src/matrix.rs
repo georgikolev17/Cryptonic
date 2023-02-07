@@ -1,3 +1,5 @@
+#![allow(unused_assignments)]
+
 use std::fmt::{Debug, Display};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
 
@@ -226,8 +228,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
         let mut return_val: usize = 0;
         match self.check_bounds(idx) {
             Ok(_) => {
-                for i in 0..idx.len() {
-                    return_val += idx[i] * self.strides[i];
+                for (i, index) in idx.iter().enumerate() {
+                    return_val += index * self.strides[i];
                 }
                 Ok(return_val)
             }
@@ -311,11 +313,11 @@ impl<T> Matrix<T>  where T: Clone + Default {
             return Err(MatrixError::DimError);
         }
         let mut result = vec![T::default(); *self.shape().last().unwrap()];
-        for i in 0..result.len() {
+        for (i, item) in result.iter_mut().enumerate() {
             idx.push(i);
             match self.get_physical_idx(idx) {
                 Ok(physical_idx) => {
-                    result[i] = self.data[physical_idx].clone();
+                    *item = self.data[physical_idx].clone();
                 },
                 Err(m_err) => {
                     return Err(m_err);
@@ -344,7 +346,7 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// assert_eq!(sum, 171);
     /// ```
     // TODO: Once slices are added allow apply on specific slices
-    pub fn apply<F: FnMut(&T)>(&self, mut func: F) {
+    pub fn apply<F: FnMut(&T)>(&self, func: F) {
         self.data.iter().for_each(func);
     }
 
@@ -364,7 +366,7 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// assert_eq!(mat.get(&vec![0, 2]).unwrap(), &6);
     /// ```
     /// TODO: Once slices are added allow apply on specific slices
-    pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
+    pub fn apply_mut<F: FnMut(&mut T)>(&mut self, func: F) {
         self.data.iter_mut().for_each(func);
     }
 }
@@ -434,12 +436,16 @@ impl<T> Matrix<T>  where T: Clone + Default {
 /// ```
 ///
 /// TODO: Add tests
+///
+/// This was added due to clippy warnings
+type BroadcastRetType = Result<(Vec<usize>, Vec<usize>, Vec<usize>), MatrixError>;
+
 pub fn broadcast(
     lhs_shape: &Vec<usize>,
     lhs_layout: Layout,
     rhs_shape: &Vec<usize>,
     rhs_layout: Layout,
-) -> Result<(Vec<usize>, Vec<usize>, Vec<usize>), MatrixError> {
+) -> BroadcastRetType {
     let lhs_shape = if lhs_shape.len() < rhs_shape.len() {
         let ones = vec![1; rhs_shape.len() - lhs_shape.len()];
         [&ones[..], &lhs_shape[..]].concat()
@@ -509,7 +515,10 @@ pub fn broadcast(
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
-pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Debug {
+/// This was added due to clippy warnings
+type ConcatRetType<T> = Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError>;
+
+pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> ConcatRetType<T> where T: Clone + Default + Debug {
     if !check_concat_dims(lhs.shape(), rhs.shape(), axis) {
         return Err(MatrixError::DimError);
     }
@@ -548,7 +557,7 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
             }
         }
     }
-    return Ok((f_matrix, lhs, rhs));
+    Ok((f_matrix, lhs, rhs))
 }
 
 /// Given two matrices the function first checks if they're broadcastable. The broadcast function
@@ -580,7 +589,10 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
-pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Sub + Sub<Output = T>, <T as Sub>::Output: Clone + Default{
+/// This was added due to clippy warnings
+type SubRetType<T> = Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError>;
+
+pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> SubRetType<T> where T: Clone + Default + Sub + Sub<Output = T>, <T as Sub>::Output: Clone + Default{
     let mut final_shape: Vec<usize> = vec![];
     match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
         Ok((_shape, _lhs_strides, _rhs_strides)) => {
@@ -651,7 +663,10 @@ pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, 
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
-pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Add + Add<Output = T>, <T as Add>::Output: Clone + Default{
+/// This was added due to clippy warnings
+type AddRetType<T> = Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError>;
+
+pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> AddRetType<T> where T: Clone + Default + Add + Add<Output = T>, <T as Add>::Output: Clone + Default{
     let mut final_shape: Vec<usize> = vec![];
     match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
         Ok((_shape, _lhs_strides, _rhs_strides)) => {
@@ -733,7 +748,7 @@ pub fn multiply_scalar<T>(mut lhs: Matrix<T>, rhs: T) -> Matrix<T> where T: Clon
     for i in 0..lhs.data.len(){
         lhs.data[i] = lhs.data[i].clone() * rhs.clone();
     }
-    return lhs;
+    lhs
 }
 
 /*
@@ -814,6 +829,9 @@ pub fn multiply<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<T>,
     Ok((new_matrix, lhs, rhs))
 }
 */
+
+
+
 /// Given a two two-dimensional matrices we return the result of the multiplication of them.
 /// The API user should be careful of the fact that we change the shape and strides of the given
 /// matrices so if he needs them to be a different shape he should reshape them after the operation.
@@ -846,9 +864,11 @@ pub fn multiply<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<T>,
 ///     println!("{idx:?} -> {item}");
 /// }
 /// ```
-///
-pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
-    let mut final_shape: Vec<usize> = vec![];
+/// This was added due to clippy warnings
+type MulRetType2D<T> = Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError>;
+
+pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> MulRetType2D<T> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
+    let mut final_shape: Vec<usize> = Vec::new();
 
     if lhs.shape.len() != 2 || rhs.shape.len() != 2 {
         return Err(MatrixError::MatmulShapeError);
@@ -902,8 +922,9 @@ pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<
 ///
 ///     println!("{}", matmul); // Should print 45
 /// ```
-///
-pub fn multiply_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> Result<(T, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
+/// This was added due to clippy warnings
+type MulRetType1D<T> = Result<(T, Matrix<T>, Matrix<T>), MatrixError>;
+pub fn multiply_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> MulRetType1D<T> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
     if lhs.shape.len() != 1 || rhs.shape.len() != 1 && lhs.shape[0] == rhs.shape[0]{
         return Err(MatrixError::MatmulShapeError);
     }
