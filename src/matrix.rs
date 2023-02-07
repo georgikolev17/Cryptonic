@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
-use std::ops::{Add, AddAssign, Index, Mul, MulAssign, Sub};
-//use std::ptr;
+use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
+
 use super::{errors::MatrixError, layout::Layout, utils::*};
 
 #[derive(Debug)]
@@ -165,8 +165,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// mat.set_strides(&vec![3, 4]);
     /// println!("{:?}", mat.strides()); // Prints [3, 4]
     /// ```
-    pub fn set_strides(&mut self, _strides: &Vec<usize>) {
-        self.strides = (*_strides.clone()).to_owned();
+    pub fn set_strides(&mut self, _strides: &[usize]) {
+        self.strides = (*_strides.to_owned()).to_owned();
     }
 
     /// Directly changes the shape of the matrix. This should be used with extreme caution
@@ -180,8 +180,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// mat.set_shape(&vec![12]);
     /// println!("{:?}", mat.shape()); // Prints [3, 4]
     /// ```
-    pub fn set_shape(&mut self, _shape: &Vec<usize>) {
-        self.shape = (*_shape.clone()).to_owned();
+    pub fn set_shape(&mut self, _shape: &[usize]) {
+        self.shape = (*_shape.to_owned()).to_owned();
     }
 }
 
@@ -345,7 +345,7 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// ```
     // TODO: Once slices are added allow apply on specific slices
     pub fn apply<F: FnMut(&T)>(&self, mut func: F) {
-        self.data.iter().for_each(|n| func(n));
+        self.data.iter().for_each(func);
     }
 
     /// Apply a function to all cells of the matrix.
@@ -365,7 +365,7 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// ```
     /// TODO: Once slices are added allow apply on specific slices
     pub fn apply_mut<F: FnMut(&mut T)>(&mut self, mut func: F) {
-        self.data.iter_mut().for_each(|n| func(n));
+        self.data.iter_mut().for_each(func);
     }
 }
 
@@ -903,7 +903,7 @@ pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<
 ///     println!("{}", matmul); // Should print 45
 /// ```
 ///
-pub fn multiply_1d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(T, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
+pub fn multiply_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> Result<(T, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
     if lhs.shape.len() != 1 || rhs.shape.len() != 1 && lhs.shape[0] == rhs.shape[0]{
         return Err(MatrixError::MatmulShapeError);
     }
@@ -945,14 +945,14 @@ impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
             }
         }
         let dims = self.mat.shape();
-        let mut i = self.mat.shape().len() - 1;
+        let mut i: i32 = (self.mat.shape().len() - 1) as i32;
         // TODO(martin): Check whether i goes out of bounds when it goes negative since i is usize
         while i >= 0 {
-            if self.index[i] + 1 < dims[i] {
-                self.index[i] += 1;
+            if self.index[i as usize] + 1 < dims[i as usize] {
+                self.index[i as usize] += 1;
                 break;
             } else {
-                self.index[i] = 0;
+                self.index[i as usize] = 0;
                 if i == 0 {
                     self.empty = true;
                     break;
