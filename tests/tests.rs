@@ -72,13 +72,13 @@ mod test_matrix_functionality {
             Err(MatrixError::OutOfBounds),
             mat_1.check_bounds(&vec![3, 4])
         );
-        assert_eq!(true, mat_1.check_bounds(&vec![2, 3]).unwrap());
+        assert!(mat_1.check_bounds(&vec![2, 3]).unwrap());
 
         assert_eq!(
             Err(MatrixError::OutOfBounds),
             mat_2.check_bounds(&vec![3, 4, 83])
         );
-        assert_eq!(true, mat_2.check_bounds(&vec![2, 3, 2]).unwrap());
+        assert!(mat_2.check_bounds(&vec![2, 3, 2]).unwrap());
     }
 
     #[test]
@@ -262,7 +262,7 @@ mod test_matrix_functionality {
         let mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
         let mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 1.., Layout::RowMajor);
         match subtract(mat1, mat2) {
-            Ok((_, _, _)) => assert!(false),
+            Ok((_, _, _)) => panic!("Shouldn't have gotten to here"),
             Err(err) => assert_eq!(MatrixError::BroadcastError, err)
         }
     }
@@ -281,7 +281,7 @@ mod test_matrix_functionality {
         let mat1 : Matrix<i32> = Matrix::from_iter(vec![3, 2], 1.., Layout::RowMajor);
         let mat2 : Matrix<i32> = Matrix::from_iter(vec![2, 2], 0.., Layout::RowMajor);
         match subtract(mat1, mat2) {
-            Ok((_, _, _)) => assert!(false),
+            Ok((_, _, _)) => panic!("Shouldn't have gotten to here"),
             Err(err) => assert_eq!(MatrixError::BroadcastError, err)
         }
     }
@@ -312,7 +312,7 @@ mod test_matrix_functionality {
         let mat2 = Matrix::from_iter(vec![3, 3], vec![1; 9], Layout::RowMajor);
 
         match concat(mat1, mat2, 1) {
-            Ok(_) => assert!(false),
+            Ok(_) => panic!("Shouldn't have gotten to here"),
             Err(err) => assert_eq!(MatrixError::DimError, err),
         }
     }
