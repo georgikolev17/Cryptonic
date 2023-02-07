@@ -1,5 +1,5 @@
-use std::fmt::Debug;
-use std::ops::{Add, Index, Sub};
+use std::fmt::{Debug, Display};
+use std::ops::{Add, AddAssign, Index, Mul, MulAssign, Sub};
 //use std::ptr;
 use super::{errors::MatrixError, layout::Layout, utils::*};
 
@@ -302,6 +302,29 @@ impl<T> Matrix<T>  where T: Clone + Default {
             Err(m_err) => Err(m_err),
         }
     }
+
+    /// Same as self.get(), but returns a copy of an entire row.
+    // TODO: Add examples
+    // TODO: Add slicing
+    pub fn get_copy_row(&self, idx: &mut Vec<usize>) -> Result<Vec<T>, MatrixError> {
+        if idx.len() != self.shape().len() - 1 {
+            return Err(MatrixError::DimError);
+        }
+        let mut result = vec![T::default(); *self.shape().last().unwrap()];
+        for i in 0..result.len() {
+            idx.push(i);
+            match self.get_physical_idx(idx) {
+                Ok(physical_idx) => {
+                    result[i] = self.data[physical_idx].clone();
+                },
+                Err(m_err) => {
+                    return Err(m_err);
+                },
+            }
+            idx.pop();
+        }
+        Ok(result)
+    }
 }
 
 // Implements the apply and apply_mut methods.
@@ -456,7 +479,7 @@ pub fn broadcast(
     ))
 }
 
-/*
+
 /// Given two matrices the function concatenates them if they comply with the check_concat_dims()
 /// function or returns an error stating that the given matrices differ by more than just the axis.
 /// For up,down,left and right concat change the place of lhs and rhs or first transpose them. It's
@@ -486,7 +509,6 @@ pub fn broadcast(
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
-*/
 pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Debug {
     if !check_concat_dims(lhs.shape(), rhs.shape(), axis) {
         return Err(MatrixError::DimError);
@@ -528,7 +550,7 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
     }
     return Ok((f_matrix, lhs, rhs));
 }
-/*
+
 /// Given two matrices the function first checks if they're broadcastable. The broadcast function
 /// takes care of any dimensional issues. After we have broadcasted the matrices we then iterate
 /// through them and subtract the elements. Again we subtract rhs from lhs so be careful how you
@@ -558,7 +580,6 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> Result<(Matrix<
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
-*/
 pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Sub + Sub<Output = T>, <T as Sub>::Output: Clone + Default{
     let mut final_shape: Vec<usize> = vec![];
     match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
@@ -601,7 +622,7 @@ pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, 
     Ok((new_matrix, lhs, rhs))
 }
 
-/*
+
 /// Given two matrices the function first checks if they're broadcastable. The broadcast function
 /// takes care of any dimensional issues. After we have broadcasted the matrices we then iterate
 /// through them and add the elements.
@@ -630,7 +651,6 @@ pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, 
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
-*/
 pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Add + Add<Output = T>, <T as Add>::Output: Clone + Default{
     let mut final_shape: Vec<usize> = vec![];
     match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
@@ -674,6 +694,228 @@ pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matri
 }
 
 
+/// Given a matrix and a scalar we return the result of the multiplication of every element of the
+/// matrix with the scalar.
+///
+/// In the future we might create a specific type: Scalar. To preserve backwards compatibility we'll
+/// most likely give the function a different method and use the new function internally.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+///
+/// ```
+/// use Cryptonic::{layout::Layout, matrix::*};
+/// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut lhs_dup: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut x = multiply_scalar(lhs, 5);
+///
+///     let mut matrix_iter = MatrixIter {
+///         mat: &x,
+///         index: vec![0; x.shape().len()],
+///         current_el: None,
+///         empty: false,
+///     };
+///
+///     let mut matrix_iter_dup = MatrixIter {
+///         mat: &lhs_dup,
+///         index: vec![0; x.shape().len()],
+///         current_el: None,
+///         empty: false,
+///     };
+///
+///     for ((item, idx), (item_2, idx_2)) in matrix_iter.zip(matrix_iter_dup) {
+///         assert_eq!(item, item_2 * 5) // Should return all 5, 10, 15, etc.
+///     }
+/// ```
+///
+pub fn multiply_scalar<T>(mut lhs: Matrix<T>, rhs: T) -> Matrix<T> where T: Clone + Default + Mul + Mul<Output = T> + MulAssign, <T as Mul>::Output: Clone + Default{
+    for i in 0..lhs.data.len(){
+        lhs.data[i] = lhs.data[i].clone() * rhs.clone();
+    }
+    return lhs;
+}
+
+/*
+/// Given a two matrices we return the result of the multiplication of them. The API user should be
+/// careful of the fact that we change the shape and strides of the given matrices so if he needs
+/// them to be a different shape he should reshape them after the operation.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+///
+///
+// use Cryptonic::{layout::Layout, matrix::*};
+// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+// let mut lhs_dup: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+// let mut x = multiply_scalar(lhs, 5);
+//
+//     let mut matrix_iter = MatrixIter {
+//         mat: &x,
+//         index: vec![0; x.shape().len()],
+//         current_el: None,
+//         empty: false,
+//     };
+//
+//     let mut matrix_iter_dup = MatrixIter {
+//         mat: &lhs_dup,
+//         index: vec![0; x.shape().len()],
+//         current_el: None,
+//         empty: false,
+//     };
+//
+//     for ((item, idx), (item_2, idx_2)) in matrix_iter.zip(matrix_iter_dup) {
+//         assert_eq!(item, item_2 * 5) // Should return all 5, 10, 15, etc.
+//     }
+///
+///
+pub fn multiply<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Clone + Default + Mul + Mul<Output = T> + MulAssign, <T as Mul>::Output: Clone + Default{
+    let mut final_shape: Vec<usize> = vec![];
+    match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
+        Ok((_shape, _lhs_strides, _rhs_strides)) => {
+            lhs.set_shape(&_shape);
+            rhs.set_shape(&_shape);
+            lhs.set_strides(&_lhs_strides);
+            rhs.set_strides(&_rhs_strides);
+            final_shape = _shape;
+        },
+        Err(err) => {
+            return Err(err);
+        }
+    }
+    /*
+    let lhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &lhs,
+        index: vec![0; lhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+    let rhs_iter: MatrixIter<T> = MatrixIter {
+        mat: &rhs,
+        index: vec![0; rhs.shape().len()],
+        current_el: None,
+        empty: false,
+    };
+    */
+    let mut new_matrix = Matrix::new(final_shape, Layout::RowMajor);
+
+    /*
+    for ((lhs_item, lhs_index), (rhs_item, rhs_index)) in lhs_iter.zip(rhs_iter){
+        assert_eq!(lhs_index, rhs_index);
+        match new_matrix.set(&lhs_index, lhs_item + rhs_item) {
+            Ok(_) => {},
+            Err(err) => {
+                return Err(err);
+            }
+        }
+    }
+    */
+    Ok((new_matrix, lhs, rhs))
+}
+*/
+/// Given a two two-dimensional matrices we return the result of the multiplication of them.
+/// The API user should be careful of the fact that we change the shape and strides of the given
+/// matrices so if he needs them to be a different shape he should reshape them after the operation.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+///
+/// ```
+/// use Cryptonic::{layout::Layout, matrix::*};
+/// let mut mat1 = Matrix::from_iter(vec![2, 2], vec![1, 2, 3, 4], Layout::RowMajor);
+///
+/// let mut mat2 = Matrix::from_iter(vec![2, 2], vec![5, 6, 0, 7], Layout::RowMajor);
+///
+/// let (matmul, mat1, mat2) = multiply_2d(mat1, mat2).unwrap();
+///
+/// let mut matrix_iter = MatrixIter {
+/// mat: &matmul,
+/// index: vec![0; matmul.shape().len()],
+/// current_el: None,
+/// empty: false,
+/// };
+///
+/// for (item, idx) in matrix_iter {
+/// // Should print:
+/// // [0, 0] -> 5
+/// // [0, 1] -> 20
+/// // [1, 0] -> 15
+/// // [1, 1] -> 46
+///     println!("{idx:?} -> {item}");
+/// }
+/// ```
+///
+pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
+    let mut final_shape: Vec<usize> = vec![];
+
+    if lhs.shape.len() != 2 || rhs.shape.len() != 2 {
+        return Err(MatrixError::MatmulShapeError);
+    }
+    match broadcast(lhs.shape(), lhs.layout, rhs.shape(), rhs.layout) {
+        Ok((_shape, _lhs_strides, _rhs_strides)) => {
+            lhs.set_shape(&_shape);
+            rhs.set_shape(&_shape);
+            lhs.set_strides(&_lhs_strides);
+            rhs.set_strides(&_rhs_strides);
+            final_shape = _shape;
+        },
+        Err(err) => {
+            return Err(err);
+        }
+    }
+    let mut new_matrix = Matrix::new(final_shape.clone(), Layout::RowMajor);
+    let mut curr_sum = T::default();
+    for i in 0..final_shape[0] {
+        for j in 0..final_shape[1]{
+            curr_sum = T::default();
+            for l in 0..final_shape[1]{
+                curr_sum += lhs.get_copy(&vec![i, l]).unwrap() * rhs.get_copy(&vec![l, j]).unwrap();
+            }
+
+            match new_matrix.set(&vec![i, j], curr_sum){
+                Ok(_) => {},
+                Err(err) => {
+                    return Err(err);
+                }
+            }
+
+        }
+    }
+    Ok((new_matrix, lhs, rhs))
+}
+
+/// Given a two one-dimensional matrices(i.e. vectors) we return the result of the dot product..
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+///
+/// ```
+/// use Cryptonic::{layout::Layout, matrix::*};
+/// let mut mat1 = Matrix::from_iter(vec![4], vec![1, 2, 3, 4], Layout::RowMajor);
+///
+/// let mut mat2 = Matrix::from_iter(vec![4], vec![5, 6, 0, 7], Layout::RowMajor);
+///
+/// let (matmul, mat1, mat2) = multiply_1d(mat1, mat2).unwrap();
+///
+///     println!("{}", matmul); // Should print 45
+/// ```
+///
+pub fn multiply_1d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(T, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default, Result<T, MatrixError>: Mul<Output = T>{
+    if lhs.shape.len() != 1 || rhs.shape.len() != 1 && lhs.shape[0] == rhs.shape[0]{
+        return Err(MatrixError::MatmulShapeError);
+    }
+    let mut curr_sum: T = T::default();
+    for i in 0..lhs.shape()[0] {
+        curr_sum += lhs.get_copy(&vec![i]) * lhs.get_copy(&vec![i]);
+    }
+    Ok((curr_sum, lhs, rhs))
+}
+
+
+
 #[derive(Debug, Clone)]
 pub struct MatrixIter<'a, T> where T: Clone + Default + 'static{
     pub mat: &'a Matrix<T>,
@@ -704,6 +946,7 @@ impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
         }
         let dims = self.mat.shape();
         let mut i = self.mat.shape().len() - 1;
+        // TODO(martin): Check whether i goes out of bounds when it goes negative since i is usize
         while i >= 0 {
             if self.index[i] + 1 < dims[i] {
                 self.index[i] += 1;
@@ -746,3 +989,12 @@ impl<T> IntoIterator for Matrix<T> where T: Clone + Default + 'static{
     }
 }
 */
+
+
+
+
+
+
+
+
+// Hilqda reda putka maina suiiiii

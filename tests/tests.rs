@@ -1,3 +1,5 @@
+extern crate core;
+
 #[cfg(test)]
 mod test_matrix_functionality {
     use core::prelude;
@@ -312,6 +314,66 @@ mod test_matrix_functionality {
         match concat(mat1, mat2, 1) {
             Ok(_) => assert!(false),
             Err(err) => assert_eq!(MatrixError::DimError, err),
+        }
+    }
+
+    #[test]
+    fn test_mul_2d() {
+        let mut mat1 = Matrix::from_iter(vec![2, 2], 5.., Layout::RowMajor);
+
+        match mat1.set(&vec![0, 0], 1){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        match mat1.set(&vec![0, 1], 2){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        match mat1.set(&vec![1, 0], 3){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        match mat1.set(&vec![1, 1], 4){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        let mut mat2 = Matrix::from_iter(vec![2, 2], 5.., Layout::RowMajor);
+
+        match mat2.set(&vec![0, 0], 5){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        match mat2.set(&vec![0, 1], 6){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        match mat2.set(&vec![1, 0], 0){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        match mat2.set(&vec![1, 1], 7){
+            Ok(_) => {},
+            Err(err) => panic!("{err}")
+        }
+
+        let (matmul, mat1, mat2) = multiply_2d(mat1, mat2).unwrap();
+
+        let mut matrix_iter = MatrixIter {
+            mat: &matmul,
+            index: vec![0; matmul.shape().len()],
+            current_el: None,
+            empty: false,
+        };
+
+        for (item, idx) in matrix_iter {
+            println!("{idx:?} -> {item}");
         }
     }
 }
