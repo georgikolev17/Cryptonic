@@ -898,18 +898,18 @@ pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<
 ///
 /// let mut mat2 = Matrix::from_iter(vec![4], vec![5, 6, 0, 7], Layout::RowMajor);
 ///
-/// let (matmul, mat1, mat2) = multiply_1d(mat1, mat2).unwrap();
+/// let (matmul, _mat1, _mat2) = multiply_1d(mat1, mat2).unwrap();
 ///
 ///     println!("{}", matmul); // Should print 45
 /// ```
 ///
-pub fn multiply_1d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(T, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default, Result<T, MatrixError>: Mul<Output = T>{
+pub fn multiply_1d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(T, Matrix<T>, Matrix<T>), MatrixError> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
     if lhs.shape.len() != 1 || rhs.shape.len() != 1 && lhs.shape[0] == rhs.shape[0]{
         return Err(MatrixError::MatmulShapeError);
     }
     let mut curr_sum: T = T::default();
     for i in 0..lhs.shape()[0] {
-        curr_sum += lhs.get_copy(&vec![i]) * lhs.get_copy(&vec![i]);
+        curr_sum += lhs.get_copy(&vec![i]).unwrap() * lhs.get_copy(&vec![i]).unwrap();
     }
     Ok((curr_sum, lhs, rhs))
 }
