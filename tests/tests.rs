@@ -16,7 +16,7 @@ mod test_matrix_functionality {
 
         // Tests that the instantiation succeeds and that the strides are generated properly
         //assert_eq!(mat.strides, vec![4, 1]);
-        println!("{:#?}", mat_2)
+        println!("{mat_2:#?}");
     }
 
     #[test]
@@ -119,9 +119,9 @@ mod test_matrix_functionality {
     fn test_broadcasting() {
         match broadcast(&vec![3], Layout::ColumnMajor, &vec![3, 1], Layout::RowMajor) {
             Ok((v1, v2, v3)) => {
-                println!("{:?}", v1);
-                println!("{:?}", v2);
-                println!("{:?}", v3);
+                println!("{v1:?}");
+                println!("{v2:?}");
+                println!("{v3:?}");
             }
             Err(err) => panic!("{}", err),
         }
@@ -168,7 +168,7 @@ mod test_matrix_functionality {
         let mat: Matrix<i32> = Matrix::from_iter(vec![3, 6], 1.., Layout::RowMajor);
         let mut sum = 0;
         mat.apply(|n| sum += *n);
-        println!("{:#?}", mat);
+        println!("{mat:#?}");
         assert_eq!(sum, 171);
     }
 
