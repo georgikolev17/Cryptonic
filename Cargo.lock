@@ -8,6 +8,10 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "concrete",
+ "concrete-boolean",
+ "concrete-core",
+ "concrete-integer",
+ "concrete-shortint",
 ]
 
 [[package]]
