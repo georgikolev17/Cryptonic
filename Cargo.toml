@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 
-tfhe = { version = "0.1.6", features = [ "boolean", "shortint", "x86_64-unix" ] }
+concrete = { version = "0.2.0-beta.2", features = [ "booleans", "shortints", "integers", "serde"] }
+bincode = "1.3.3"

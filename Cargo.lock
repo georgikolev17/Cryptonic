@@ -6,7 +6,8 @@ version = 3
 name = "Cryptonic"
 version = "0.1.0"
 dependencies = [
- "tfhe",
+ "bincode",
+ "concrete",
 ]
 
 [[package]]
@@ -59,6 +60,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "concrete"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13da2941c20d630835417e98dd55e1ad7a07116a77a27d98bb11f7e5f23aec69"
+dependencies = [
+ "concrete-boolean",
+ "concrete-integer",
+ "concrete-shortint",
+ "paste",
+ "serde",
+]
+
+[[package]]
+name = "concrete-boolean"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47122fadb9f0c23f5aa9bcfcddd1f0e41e3769fcb8f8a44e3872f39416a5011c"
+dependencies = [
+ "concrete-core",
+ "serde",
+]
+
+[[package]]
+name = "concrete-core"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6886592c2bee7b42a162ff454e454ec897a4809392db8bbed26eff38c68dd2ac"
+dependencies = [
+ "aligned-vec",
+ "bincode",
+ "concrete-csprng",
+ "concrete-fft",
+ "dyn-stack",
+ "lazy_static",
+ "once_cell",
+ "rayon",
+ "serde",
+]
+
+[[package]]
 name = "concrete-csprng"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -78,6 +119,28 @@ dependencies = [
  "aligned-vec",
  "dyn-stack",
  "num-complex",
+ "serde",
+]
+
+[[package]]
+name = "concrete-integer"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fefd740a574a83ae8f0ec5ef529c7d090857292e5473aa88ad84ebb260c8f02"
+dependencies = [
+ "concrete-core",
+ "concrete-shortint",
+ "rayon",
+ "serde",
+]
+
+[[package]]
+name = "concrete-shortint"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "852e563a4719cebf3a6a800f2087900174c32f0f149cb3d4ddd5fb003065a5df"
+dependencies = [
+ "concrete-core",
  "serde",
 ]
 
@@ -159,13 +222,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.10.5"
+name = "lazy_static"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
-dependencies = [
- "either",
-]
+checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
@@ -310,24 +370,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "tfhe"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3d4e828f4590bbecb83f1455e14555d6f820d3e4fd2faa7bd4749aeb7f55abe"
-dependencies = [
- "aligned-vec",
- "bincode",
- "concrete-csprng",
- "concrete-fft",
- "dyn-stack",
- "itertools",
- "once_cell",
- "paste",
- "rayon",
- "serde",
 ]
 
 [[package]]
