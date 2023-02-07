@@ -1,4 +1,4 @@
-use super::{errors::MatrixError, layout::Layout};
+use super::layout::Layout;
 
 
 /// Calculates strides from a given shape and layout.
