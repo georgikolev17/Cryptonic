@@ -5,7 +5,7 @@ extern crate core;
 pub mod errors;
 pub mod layout;
 pub mod matrix;
-pub mod type_traits;
+pub mod ciphtxt;
 pub mod utils;
 pub mod key_gen;
 pub mod layer_trait;
