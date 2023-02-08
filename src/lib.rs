@@ -9,4 +9,5 @@ pub mod type_traits;
 pub mod utils;
 pub mod key_gen;
 pub mod layer_trait;
+pub mod example;
 //pub mod dense_layer;
