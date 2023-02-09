@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 
 extern crate core;
-
 pub mod errors;
 pub mod layout;
 pub mod matrix;
@@ -9,5 +8,6 @@ pub mod ciphtxt;
 pub mod utils;
 pub mod key_gen;
 pub mod layer_trait;
+pub mod nnet;
 pub mod example;
-//pub mod dense_layer;
+pub mod layer;
