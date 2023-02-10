@@ -4,4 +4,6 @@ pub trait Layer {
     type CType;
 
     fn forward(&mut self, inputs: Matrix<Self::CType>) -> Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default;
+
+    fn get_input_shape() -> Vec<usize>;
 }
