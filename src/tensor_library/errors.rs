@@ -1,5 +1,6 @@
 use std::error;
 use std::fmt;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MatrixError {
