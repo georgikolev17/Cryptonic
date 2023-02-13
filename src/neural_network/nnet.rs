@@ -2,9 +2,11 @@ use std::collections::{HashMap, VecDeque};
 use std::error::Error;
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
-use crate::tensor_library::matrix::Matrix;
+use crate::tensor_library::layout::Layout::RowMajor;
+use crate::tensor_library::matrix::{Matrix, multiply_1d, multiply_2d};
 
 // TODO: Add tests and examples for everything
+
 pub struct Nnet<T> where T : Clone + Default {
     // HashMap <id, (&Layer, weights, biases)>
     layers : HashMap<usize, (LayerType<T>, Vec<i32>, Vec<i32>)>,
@@ -78,7 +80,7 @@ impl<T> Nnet<T> where T : Clone + Default {
         Ok(())
     }
 
-    pub fn forward(&self, input: Matrix<T>) -> Result<(), &str>{
+    pub fn forward(&mut self, input: Matrix<T>) -> Result<(), &str>{
         let first_layer_id = match self.get_first_layer_id() {
             Some(a) => a,
             None => return Err("You must select the first layer by adding a node from None to first layer id!")
@@ -87,13 +89,24 @@ impl<T> Nnet<T> where T : Clone + Default {
         if input.shape() != first_layer.get_input_shape() {
             return Err("invalid input shape");
         }
-        let mut nodes : VecDeque<usize> = VecDeque::new();
-        nodes.push_back(*first_layer_id);
+        let mut layers_left : VecDeque<usize> = VecDeque::new();
+        self.nodes.push_back(*first_layer_id);
+        let mut current_input = input;
 
-        while !nodes.is_empty() {
-            // let current_layer_id  = nodes.pop_back().unwrap();
-            // let (mut current_layer, weights, biases) = &self.layers.get(&current_layer_id).unwrap();
-            // current_layer.forward();
+        while !layers_left.is_empty() {
+            let current_layer_id  = layers_left.pop_back().unwrap();
+            let mut current_layer = self.layers.get_mut(&current_layer_id).unwrap();
+            // Add next layers
+            let next_layers = self.nodes.iter().filter(|(from, to)| from.unwrap() == current_layer_id && !to.is_none()).map(|(a, b)| b.unwrap()).collect();
+            layers_left.push_back(next_layers);
+            // Forward propagation (could be in separate function)
+            let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![weights.len()], weights, RowMajor);
+            let (multiplied_input, weights_matrix, mut current_input) = multiply_2d(weights_matrix, current_input.clone()).unwrap();
+            let biases_matrix : Matrix<i32> = Matrix::from_iter(vec![biases.len()], biases, RowMajor);
+            let (forwarded_input, _biases_matrix, _multiplied_input) = multiply_2d(biases_matrix, multiplied_input.clone()).unwrap();
+            // Activation function (and other layer operations)
+            current_layer.0.forward(input.clone());
+            current_input = forwarded_input;
         }
 
         Ok(())

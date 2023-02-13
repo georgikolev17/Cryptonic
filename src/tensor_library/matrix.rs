@@ -5,7 +5,7 @@ use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
 
 use super::{errors::MatrixError, layout::Layout, utils::*};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Matrix<T> where T: Clone + Default + 'static{
     pub shape: Vec<usize>,
     pub strides: Vec<usize>,

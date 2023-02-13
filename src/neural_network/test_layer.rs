@@ -13,7 +13,7 @@ pub struct TestLayer<T> {
 impl<T> Layer for TestLayer<T> {
     type CType = T;
 
-    fn forward(&mut self) -> &Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
+    fn forward(&mut self, input : Matrix<T>) -> &Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
         todo!()
     }
 
