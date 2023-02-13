@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::error::Error;
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
 use crate::tensor_library::matrix::Matrix;
 
+// TODO: Add tests and examples for everything
 pub struct Nnet<T> where T : Clone + Default {
     // HashMap <id, (&Layer, weights, biases)>
     layers : HashMap<usize, (LayerType<T>, Vec<i32>, Vec<i32>)>,
@@ -52,18 +53,18 @@ impl<T> Nnet<T> where T : Clone + Default {
     /// ```
     ///
     pub fn add_node(&mut self, from_layer_id : Option<usize>, to_layer_id : Option<usize>) -> Result<(), &str> {
-        if from_layer_id == None && to_layer_id != None {
+        if from_layer_id.is_none() && !to_layer_id.is_none() {
             return self.add_first_node(to_layer_id.unwrap());
         }
-        if from_layer_id != None && to_layer_id == None {
+        if !from_layer_id.is_none() && to_layer_id.is_none() {
             return self.add_last_node(from_layer_id.unwrap());
         }
-        if from_layer_id == None && to_layer_id == None {
+        if from_layer_id.is_none() && to_layer_id.is_none() {
             return Err("Both layers are None, expected at least one of them to be Some<usize>");
         }
         let from_layer = self.get_layer_by_id(from_layer_id.unwrap());
         let to_layer = self.get_layer_by_id(to_layer_id.unwrap());
-        if to_layer == None || from_layer == None {
+        if to_layer.is_none() || from_layer.is_none() {
             return Err("One of the layer ids you provide doesn't exist in the  current neural network");
         }
         let from_layer = from_layer.unwrap();
@@ -86,6 +87,15 @@ impl<T> Nnet<T> where T : Clone + Default {
         if input.shape() != first_layer.get_input_shape() {
             return Err("invalid input shape");
         }
+        let mut nodes : VecDeque<usize> = VecDeque::new();
+        nodes.push_back(*first_layer_id);
+
+        while !nodes.is_empty() {
+            // let current_layer_id  = nodes.pop_back().unwrap();
+            // let (mut current_layer, weights, biases) = &self.layers.get(&current_layer_id).unwrap();
+            // current_layer.forward();
+        }
+
         Ok(())
     }
 
@@ -105,28 +115,28 @@ impl<T> Nnet<T> where T : Clone + Default {
         Ok(())
     }
 
-    fn get_first_layer_id(&self) ->  Option<usize> {
-        for (from, to) in self.nodes {
-            if from == None {
+    fn get_first_layer_id(&self) ->  &Option<usize> {
+        for (from, to) in &self.nodes {
+            if from.is_none() {
                 return to;
             }
         }
-        None
+        &None
     }
 
-    fn get_last_layer_id(&self) ->  Option<usize> {
-        for (from, to) in self.nodes {
-            if to == None {
+    fn get_last_layer_id(&self) ->  &Option<usize> {
+        for (from, to) in &self.nodes {
+            if to.is_none() {
                 return from;
             }
         }
-        None
+        &None
     }
 
     fn get_layer_by_id(&self, id:usize) -> Option<&LayerType<T>> {
-        for (key, value) in self.layers {
-            if key == id {
-                return Some(value[0]);
+        for (key, value) in &self.layers {
+            if key == &id {
+                return Some(&value.0);
             }
         }
         None

@@ -5,9 +5,6 @@
 // use concrete_shortint::Parameters;
 // use concrete_shortint::parameters::{CarryModulus, MessageModulus};
 // use concrete_core::prelude::{DecompositionBaseLog, DecompositionLevelCount, GlweDimension, LweDimension, PolynomialSize, StandardDev};
-
-use Cryptonic::nnet::Nnet;
-use Cryptonic::layers::dense_layer;
 use Cryptonic::neural_network::nnet::Nnet;
 use Cryptonic::tensor_library::matrix::Matrix;
 

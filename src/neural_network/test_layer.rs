@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use crate::neural_network::layer_trait::Layer;
 use crate::tensor_library::matrix::Matrix;
 
@@ -7,6 +8,7 @@ use crate::tensor_library::matrix::Matrix;
 pub struct TestLayer<T> {
     input_shape : Vec<usize>,
     output_shape : Vec<usize>,
+    phantom: PhantomData<T>,
 }
 impl<T> Layer for TestLayer<T> {
     type CType = T;

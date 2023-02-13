@@ -11,18 +11,21 @@ impl<T> Layer for LayerType<T> {
 
     fn forward(&mut self)  -> &Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
         match self {
+            // When a layer is implemented, it will be added here
             LayerType::TestLayer(testLayer) => return testLayer.forward(),
         }
     }
 
     fn get_input_shape(&self) -> &Vec<usize> {
         match self {
+            // When a layer is implemented, it will be added here
             LayerType::TestLayer(testLayer) => return testLayer.get_input_shape(),
         }
     }
 
     fn get_output_shape(&self) -> &Vec<usize> {
         match self {
+            // When a layer is implemented, it will be added here
             LayerType::TestLayer(testLayer) => return testLayer.get_output_shape(),
         }
     }
