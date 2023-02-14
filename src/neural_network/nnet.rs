@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 // This import was deprecated
 // use crate::cryptography::type_traits::{MyAdd, MyMul};
@@ -17,7 +18,7 @@ pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign  + Add<i32,
     nodes : HashMap<Option<usize>, Option<usize>>,
 }
 
-impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T>, i32: Mul<T>{
+impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T>, i32: Mul<T>{
     pub fn new() -> Nnet<T> {
         Nnet {
             layers: HashMap::new(),
@@ -84,7 +85,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Out
         Ok(())
     }
 
-    pub fn forward(&mut self, input: Matrix<T>) -> Result<(), &str>{
+    pub fn forward(&mut self, input: Matrix<T>) -> Result<(Matrix<T>), &str>{
         let first_layer_id = match self.get_first_layer_id() {
             Some(a) => a,
             None => return Err("You must select the first layer by adding a node from None to first layer id!")
@@ -102,7 +103,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Out
             let (current_layer, weights, biases) = self.layers.get_mut(&current_layer_id).unwrap();
             // Add next layers
             let next_layers : Vec<usize> = self.nodes.iter()
-                .filter(|(from, to)| from.unwrap() == current_layer_id && !to.is_none())
+                .filter(|(from, to)| !from.is_none() && from.unwrap() == current_layer_id && !to.is_none())
                 .map(|(a, b)| b.unwrap()).collect();
             for _layer in next_layers {
                 layers_left.push_back(_layer);
@@ -141,7 +142,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Out
             current_input = forwarded_input;
         }
 
-        Ok(())
+        Ok((current_input))
     }
 
     fn add_first_node(&mut self, layer_id : usize)  -> Result<(), &str> {
