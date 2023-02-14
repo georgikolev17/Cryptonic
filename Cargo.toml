@@ -10,3 +10,10 @@ edition = "2021"
 tfhe = { version = "0.1.7", features = [ "boolean", "shortint", "x86_64-unix" ] }
 
 bincode = "1.3.3"
+
+[package]
+# ...
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+]
