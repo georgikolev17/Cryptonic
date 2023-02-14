@@ -6,7 +6,7 @@ use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
 use crate::tensor_library::layout::Layout;
 use crate::tensor_library::layout::Layout::RowMajor;
-use crate::tensor_library::matrix::{Matrix, MatrixIter, multiply_1d, multiply_2d, multiply_scalar};
+use crate::tensor_library::matrix::{Matrix, MatrixIter, multiply_1d, multiply_2d, multiply_scalar, multiply_scalar_generic};
 
 // TODO: Add tests and examples for everything
 
@@ -17,7 +17,7 @@ pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign  + Add<i32,
     nodes : HashMap<Option<usize>, Option<usize>>,
 }
 
-impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Output = T>{
+impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T>, i32: Mul<T>{
     pub fn new() -> Nnet<T> {
         Nnet {
             layers: HashMap::new(),
@@ -120,7 +120,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Out
             for (el, idx) in input_iterator {
                 let weights: Vec<i32> = weights.clone()[ctr*input.shape.iter().sum()..(ctr+1)*input.shape.iter().sum()].to_vec();
                 let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![input.shape.iter().sum()], weights, Layout::RowMajor);
-                let mut current_output_el = multiply_scalar(weights_matrix.clone(), el);
+                let mut current_output_el = multiply_scalar_generic(weights_matrix.clone(), el);
                 let iterator : MatrixIter<T> = MatrixIter {
                     mat: &input,
                     index: vec![0; input.shape().len()],

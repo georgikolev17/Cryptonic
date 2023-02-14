@@ -2,7 +2,6 @@
 
 use std::fmt::{Debug, Display};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
-use std::process::Output;
 // use crate::cryptography::type_traits::{MyAdd, MyMul};
 use crate::tensor_library::errors::MatrixError;
 use crate::tensor_library::layout::Layout;
@@ -777,6 +776,14 @@ pub fn multiply_scalar<T>(mut lhs: Matrix<T>, rhs: T) -> Matrix<T> where T: Clon
         lhs.data[i] = lhs.data[i].clone() * rhs.clone();
     }
     lhs
+}
+
+pub fn multiply_scalar_generic<T>(mut lhs: Matrix<i32>, rhs: T) -> Matrix<T> where T: Clone + Default + Mul<i32, Output = T>, i32: Mul<T>{
+    let mut new_matrix: Matrix<T> = Matrix::new(lhs.shape().clone(), lhs.layout.clone());
+    for i in 0..lhs.data.len(){
+        new_matrix.data[i] = rhs.clone() * lhs.data[i].clone();
+    }
+    new_matrix
 }
 
 
