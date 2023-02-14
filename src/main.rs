@@ -14,8 +14,8 @@ fn main() {
 
     let dense_layer2 : DenseLayer<i32> = DenseLayer::new(Some(vec![2]), Some(vec![2]));
     let layer2 = LayerType::DenseLayer(dense_layer2);
-    let biases2 : Vec<i32> = vec![18; 2];
-    let weights2 : Vec<i32> = vec![3 ; 4];
+    let biases2 : Vec<i32> = vec![0; 2];
+    let weights2 : Vec<i32> = vec![1 ; 4];
 
     let mut network : Nnet<i32>  = Nnet::new();
     let id1 = network.add_layer(layer1, weights1, biases1);
