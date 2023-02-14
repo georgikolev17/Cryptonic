@@ -1,5 +1,4 @@
 use std::collections::{HashMap, VecDeque};
-use std::error::Error;
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
 use crate::tensor_library::layout::Layout::RowMajor;
@@ -90,7 +89,8 @@ impl<T> Nnet<T> where T : Clone + Default {
             return Err("invalid input shape");
         }
         let mut layers_left : VecDeque<usize> = VecDeque::new();
-        self.nodes.push_back(*first_layer_id);
+        // TODO(For Georgi): This used to be: self.nodes.push_back(*first_layer_id); - Check if my addition is what you meant
+        layers_left.push_back(*first_layer_id);
         let mut current_input = input;
 
         while !layers_left.is_empty() {
@@ -100,9 +100,10 @@ impl<T> Nnet<T> where T : Clone + Default {
             let next_layers = self.nodes.iter().filter(|(from, to)| from.unwrap() == current_layer_id && !to.is_none()).map(|(a, b)| b.unwrap()).collect();
             layers_left.push_back(next_layers);
             // Forward propagation (could be in separate function)
-            let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![weights.len()], weights, RowMajor);
+            let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![weights.len()], weights.clone(), RowMajor);
             let (multiplied_input, weights_matrix, mut current_input) = multiply_2d(weights_matrix, current_input.clone()).unwrap();
-            let biases_matrix : Matrix<i32> = Matrix::from_iter(vec![biases.len()], biases, RowMajor);
+
+            let biases_matrix : Matrix<i32> = Matrix::from_iter(vec![biases.len()], biases.clone(), RowMajor);
             let (forwarded_input, _biases_matrix, _multiplied_input) = multiply_2d(biases_matrix, multiplied_input.clone()).unwrap();
             // Activation function (and other layer operations)
             current_layer.0.forward(input.clone());

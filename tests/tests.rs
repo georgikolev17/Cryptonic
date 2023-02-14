@@ -3,7 +3,10 @@ extern crate core;
 #[cfg(test)]
 mod test_matrix_functionality {
     
-    use Cryptonic::{errors::*, layout::*, matrix::*, utils::*};
+    use Cryptonic::tensor_library::errors::MatrixError;
+    use Cryptonic::tensor_library::layout::Layout;
+    use Cryptonic::tensor_library::matrix::{add, broadcast, concat, Matrix, MatrixIter, multiply_2d, subtract};
+    use Cryptonic::tensor_library::utils::check_concat_dims;
 
     #[test]
     fn test_row_major_gen() {

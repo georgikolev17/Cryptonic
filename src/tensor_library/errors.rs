@@ -17,8 +17,8 @@ pub enum MatrixError {
     NotImplementedError
 }
 
-impl fmt::Display for MatrixError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for MatrixError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             MatrixError::InvalidParams => write!(f, "Invalid parameters"),
             MatrixError::SliceError => write!(f, "Invalid slice for Matrix"),

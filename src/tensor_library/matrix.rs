@@ -2,8 +2,10 @@
 
 use std::fmt::{Debug, Display};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
+use crate::tensor_library::errors::MatrixError;
+use crate::tensor_library::layout::Layout;
+use crate::tensor_library::utils::{calc_concat_shape, calc_strides_from_shape, check_concat_dims};
 
-use super::{errors::MatrixError, layout::Layout, utils::*};
 
 #[derive(Debug, Clone)]
 pub struct Matrix<T> where T: Clone + Default + 'static{
@@ -24,7 +26,8 @@ impl<T> Matrix<T> where T: Clone + Default {
     ///
     /// # Example
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// ```
     pub fn new(_shape: Vec<usize>, layout: Layout) -> Matrix<T>
@@ -43,6 +46,8 @@ impl<T> Matrix<T> where T: Clone + Default {
     /// # Example
     /// ```
     /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 0.., Layout::RowMajor);
     /// ```
     ///
@@ -97,7 +102,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// println!("{}", mat.size()); // Prints 12, because 12 = 3*4
     /// ```
@@ -109,7 +115,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// println!("{:?}", mat.shape()); // Prints [3, 4]
     /// ```
@@ -121,7 +128,9 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout, errors::MatrixError};
+    /// use Cryptonic::tensor_library::errors::MatrixError;
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![100], Layout::RowMajor);
     ///
     /// assert_eq!(Err(MatrixError::ReshapeError), mat.reshape(&vec![20, 6]));
@@ -143,12 +152,14 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// This depends on the layout of the matrix(i.e. whether it's Row Major or Column Major)
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// println!("{:?}", mat.strides()); // Prints [4, 1]
     /// ```
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::ColumnMajor);
     /// println!("{:?}", mat.strides()); // Prints [1, 3]
     /// ```
@@ -162,7 +173,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// mat.set_strides(&vec![3, 4]);
     /// println!("{:?}", mat.strides()); // Prints [3, 4]
@@ -177,7 +189,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// recalculate or check the strides which is why it's so dangerous.
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// mat.set_shape(&vec![12]);
     /// println!("{:?}", mat.shape()); // Prints [3, 4]
@@ -198,7 +211,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4],Layout::RowMajor);
     /// println!("{:?}", mat.check_bounds(&vec![3, 4]).err()); // Prints Error because !3<3 && !4<4
     /// println!("{:?}", mat.check_bounds(&vec![2, 3]).unwrap()); // Prints () because 2<3 && 3<4
@@ -220,7 +234,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// println!("{}", mat.get_physical_idx(&vec![2, 1]).unwrap()); // Prints 9, because 9 = 2*4 + 1*1, since strides = [4, 1]
     /// ```
@@ -246,7 +261,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     ///
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// println!("{}", mat.get(&vec![2, 1]).unwrap()); // prints 0 because i32 default value is 0
     /// println!("{:?}", mat.get(&vec![5, 6]).err()); // prints Error because self.get_physical_idx() fails
@@ -289,7 +305,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// function for that case.
     /// # Examples
     /// ```
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::new(vec![3, 4], Layout::RowMajor);
     /// mat.set(&vec![0,0], 5);
     /// println!("{}", mat.get(&vec![0,0]).unwrap()); // print 5
@@ -338,7 +355,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// # Examples
     /// ```
     /// // Get the sum of all cells
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 6], 1..,Layout::RowMajor);
     /// let mut sum = 0;
     /// mat.apply(|n| sum += *n);
@@ -357,7 +375,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// # Examples
     /// ```
     /// // Modify all cells with a function
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 1..,Layout::RowMajor);
     /// mat.apply_mut(|mut n| *n *= 2);
     ///
@@ -378,7 +397,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// # Examples
     /// ```
     /// // Modify all cells with a function
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 1..,Layout::RowMajor);
     /// mat.transpose();
     ///
@@ -400,7 +420,8 @@ impl<T> Matrix<T>  where T: Clone + Default {
     /// # Examples
     /// ```
     /// // Modify all cells with a function
-    /// use Cryptonic::{matrix::Matrix, layout::Layout};
+    /// use Cryptonic::tensor_library::layout::Layout;
+    /// use Cryptonic::tensor_library::matrix::Matrix;
     /// let mut mat: Matrix<i32> = Matrix::from_iter(vec![3, 4], 1..,Layout::RowMajor);
     /// mat.flatten();
     ///
@@ -424,13 +445,14 @@ impl<T> Matrix<T>  where T: Clone + Default {
 ///
 /// # Examples
 /// ```
-/// use Cryptonic::{matrix::broadcast, layout::Layout};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{broadcast, Matrix};
 /// match broadcast(&vec![3, 4], Layout::RowMajor, &vec![7, 3, 4], Layout::RowMajor) {
 ///             Ok((v1, v2, v3)) => {
 ///                 println!("{:?}", v1); // Should print out [7, 3, 4]
 ///                 println!("{:?}", v2); // Should print out [0, 4, 1]
 ///                 println!("{:?}", v3); // Should print out [12, 4, 1]
-///             },
+///             }
 ///             Err(E) => panic!("{}", E)
 ///         }
 /// ```
@@ -495,7 +517,8 @@ pub fn broadcast(
 /// we'll most likely add a feature to take them by reference.
 /// # Examples
 /// ```
-/// use Cryptonic::{layout::Layout, matrix::*};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{concat, Matrix, MatrixIter};
 /// let mut rhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 /// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 4], 1..,Layout::RowMajor);
 ///
@@ -511,7 +534,7 @@ pub fn broadcast(
 ///         for (item, idx) in matrix_iter {
 ///             println!("{:?} -> {}", idx, item);
 ///         }
-///     },
+///     }
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
@@ -569,7 +592,8 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> ConcatRetType<T
 /// we'll most likely add a feature to take them by reference.
 /// # Examples
 /// ```
-/// use Cryptonic::{layout::Layout, matrix::*};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{Matrix, MatrixIter, subtract};
 /// let mut rhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 /// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 ///
@@ -585,7 +609,7 @@ pub fn concat<T>(lhs: Matrix<T>, rhs: Matrix<T>, axis: usize) -> ConcatRetType<T
 ///         for (item, idx) in matrix_iter {
 ///             println!("{:?} -> {}", idx, item); // Should return all zeroes
 ///         }
-///     },
+///     }
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
@@ -643,7 +667,8 @@ pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> SubRetType<T> where
 /// we'll most likely add a feature to take them by reference.
 /// # Examples
 /// ```
-/// use Cryptonic::{layout::Layout, matrix::*};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{add, Matrix, MatrixIter};
 /// let mut rhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 /// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 ///
@@ -659,7 +684,7 @@ pub fn subtract<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> SubRetType<T> where
 ///         for (item, idx) in matrix_iter {
 ///             println!("{:?} -> {}", idx, item); // Should return all 2, 4, 6, etc.
 ///         }
-///     },
+///     }
 ///     Err(_) => {} // Shouldn't happen given these specific parameters
 /// }
 /// ```
@@ -720,7 +745,8 @@ pub fn add<T>(mut lhs: Matrix<T>,mut rhs: Matrix<T>) -> AddRetType<T> where T: C
 /// # Examples
 ///
 /// ```
-/// use Cryptonic::{layout::Layout, matrix::*};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{Matrix, MatrixIter, multiply_scalar};
 /// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 /// let mut lhs_dup: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
 /// let mut x = multiply_scalar(lhs, 5);
@@ -841,7 +867,8 @@ pub fn multiply<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> Result<(Matrix<T>,
 /// # Examples
 ///
 /// ```
-/// use Cryptonic::{layout::Layout, matrix::*};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{Matrix, MatrixIter, multiply_2d};
 /// let mut mat1 = Matrix::from_iter(vec![2, 2], vec![1, 2, 3, 4], Layout::RowMajor);
 ///
 /// let mut mat2 = Matrix::from_iter(vec![2, 2], vec![5, 6, 0, 7], Layout::RowMajor);
@@ -913,7 +940,8 @@ pub fn multiply_2d<T>(mut lhs: Matrix<T>, mut rhs: Matrix<T>) -> MulRetType2D<T>
 /// # Examples
 ///
 /// ```
-/// use Cryptonic::{layout::Layout, matrix::*};
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{Matrix, multiply_1d};
 /// let mut mat1 = Matrix::from_iter(vec![4], vec![1, 2, 3, 4], Layout::RowMajor);
 ///
 /// let mut mat2 = Matrix::from_iter(vec![4], vec![5, 6, 0, 7], Layout::RowMajor);
@@ -935,6 +963,38 @@ pub fn multiply_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> MulRetType1D<T> where T
     Ok((curr_sum, lhs, rhs))
 }
 
+/*
+/// Given a two one-dimensional matrices(i.e. vectors) we return the result of the dot product..
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+///
+/// ```
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{Matrix, multiply_1d};
+/// let mut mat1 = Matrix::from_iter(vec![4], vec![1, 2, 3, 4], Layout::RowMajor);
+///
+/// let mut mat2 = Matrix::from_iter(vec![4], vec![5, 6, 0, 7], Layout::RowMajor);
+///
+/// let (matmul, _mat1, _mat2) = multiply_1d(mat1, mat2).unwrap();
+///
+///     println!("{}", matmul); // Should print 45
+/// ```
+/// This was added due to clippy warnings
+type MulByRetType1D<T> = Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError>;
+pub fn multiplyby_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> MulByRetType1D<T> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
+    if rhs.shape.len() != 1 {
+        return Err(MatrixError::MatmulShapeError);
+    }
+    //let mut ret_matrix = Matrix::new(lhs.shape().clone(), Layout::RowMajor);
+
+    for i in 0..rhs.shape() {
+        let (ret_matrix, _lhs, rhs) = multiply_scalar(_lhs, rhs.get_copy(&vec![i]));
+    }
+    Ok((rhs.clone(), rhs.clone(), rhs))
+}
+*/
 
 
 #[derive(Debug, Clone)]
@@ -967,7 +1027,6 @@ impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
         }
         let dims = self.mat.shape();
         let mut i: i32 = (self.mat.shape().len() - 1) as i32;
-        // TODO(martin): Check whether i goes out of bounds when it goes negative since i is usize
         while i >= 0 {
             if self.index[i as usize] + 1 < dims[i as usize] {
                 self.index[i as usize] += 1;
@@ -985,7 +1044,7 @@ impl<T> Iterator for MatrixIter<'_, T> where T: Clone + Default{
     }
 }
 
-/*
+ /*
 impl<T> Iterator for Matrix<T>{
     type Item = T;
 
@@ -1009,13 +1068,4 @@ impl<T> IntoIterator for Matrix<T> where T: Clone + Default + 'static{
         }
     }
 }
-*/
-
-
-
-
-
-
-
-
-// Hilqda reda putka maina suiiiii
+ */
