@@ -1,4 +1,4 @@
-/// DEPRECATED
+// DEPRECATED
 /*
 pub trait MyAdd<Rhs = i32> {
     type Output;
