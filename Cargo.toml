@@ -7,6 +7,9 @@ include = [
     "**/*.rs",
     "Cargo.toml",
 ]
+description = "This project includes a tensor library, utilities for FHE functionality and most importantly an FHE based ML library"
+license-file = "LICENSE.txt"
+authors = ["Martin Chtilianov <martin@chtilianov.com>", "George Kolev"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
