@@ -1,10 +1,14 @@
+/// DEPRECATED
+/*
+pub trait MyAdd<Rhs = i32> {
+    type Output;
 
-pub trait AddWithScalar<Item> {
-
-    fn AddWithScalar(T: Item, Scalar: i32) -> Item;
+    fn add(self, rhs: Rhs) -> Self::Output;
 }
 
+pub trait MyMul<Rhs = i32> {
+    type Output;
 
-pub trait MulWithScalar<Item> {
-    fn MulWithScalar(T: Item, Scalar: i32) -> Item;
+    fn mul(self, rhs: Rhs) -> Self::Output;
 }
+*/

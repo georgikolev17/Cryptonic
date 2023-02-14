@@ -1,5 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::ops::{Add, AddAssign, Mul, MulAssign};
+// This import was deprecated
+// use crate::cryptography::type_traits::{MyAdd, MyMul};
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
 use crate::tensor_library::layout::Layout;
@@ -8,14 +10,14 @@ use crate::tensor_library::matrix::{Matrix, MatrixIter, multiply_1d, multiply_2d
 
 // TODO: Add tests and examples for everything
 
-pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign {
+pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign  + Add<i32, Output = T>{
     // HashMap <id, (&Layer, weights, biases)>
     layers : HashMap<usize, (LayerType<T>, Vec<i32>, Vec<i32>)>,
     // HashMap <from_layer, to_layer>
     nodes : HashMap<Option<usize>, Option<usize>>,
 }
 
-impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign {
+impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Output = T>{
     pub fn new() -> Nnet<T> {
         Nnet {
             layers: HashMap::new(),
@@ -129,7 +131,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign {
                 for (el, idx) in iterator {
                     sum += el;
                 }
-                sum += biases.get(0).unwrap();
+                sum = sum + *biases.get(0).unwrap();
                 result.push(sum);
                 ctr+=1;
             }
