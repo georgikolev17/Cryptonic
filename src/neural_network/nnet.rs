@@ -95,7 +95,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Out
         }
         let mut layers_left : VecDeque<usize> = VecDeque::new();
         layers_left.push_back(*first_layer_id);
-        let mut current_input = input;
+        let mut current_input = input.clone();
 
         while !layers_left.is_empty() {
             let current_layer_id  = layers_left.pop_back().unwrap();
@@ -118,8 +118,8 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign + Add<i32, Out
             };
             let mut ctr: usize = 0;
             for (el, idx) in input_iterator {
-                let weights: Vec<i32> = weights.clone()[ctr*input.shape.iter().sum()..(ctr+1)*input.shape.iter().sum()].to_vec();
-                let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![input.shape.iter().sum()], weights, Layout::RowMajor);
+                let weights: Vec<i32> = weights.clone()[ctr*input.clone().shape.iter().sum::<usize>()..(ctr+1)*input.clone().shape.iter().sum::<usize>()].to_vec();
+                let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![input.clone().shape.iter().sum()], weights, Layout::RowMajor);
                 let mut current_output_el = multiply_scalar_generic(weights_matrix.clone(), el);
                 let iterator : MatrixIter<T> = MatrixIter {
                     mat: &input,
