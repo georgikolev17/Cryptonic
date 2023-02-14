@@ -34,8 +34,8 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
     /// use Cryptonic::neural_network::nnet::Nnet;
     /// let mut nnet : Nnet<dense_layer> = Nnet::new();
     /// let l : dense_layer = dense_layer {};
-    /// println!("{}", nnet.add_layer(&l, vec![1;5]));
-    /// println!("{}", nnet.add_layer(&l, vec![1;5]));
+    /// //println!("{}", nnet.add_layer(&l, vec![1;5]));
+    /// //println!("{}", nnet.add_layer(&l, vec![1;5]));
     /// ```
     ///
     pub fn add_layer(&mut self, layer_type : LayerType<T>, weights : Vec<i32>, biases : Vec<i32>) -> usize {
@@ -54,9 +54,9 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
     /// use Cryptonic::nnet::Nnet;
     /// let mut nnet : Nnet<dense_layer> = Nnet::new();
     /// let l : dense_layer = dense_layer {};
-    /// println!("{}", nnet.add_layer(&l, vec![1;5]));
-    /// println!("{}", nnet.add_layer(&l, vec![1;5]));
-    /// nnet.add_node(0, 1);
+    /// //println!("{}", nnet.add_layer(&l, vec![1;5]));
+    /// //println!("{}", nnet.add_layer(&l, vec![1;5]));
+    /// //nnet.add_node(0, 1);
     /// ```
     ///
     pub fn add_node(&mut self, from_layer_id : Option<usize>, to_layer_id : Option<usize>) -> Result<(), &str> {
@@ -122,7 +122,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
                 let weights: Vec<i32> = weights.clone()[ctr*input.clone().shape.iter().sum::<usize>()..(ctr+1)*input.clone().shape.iter().sum::<usize>()].to_vec();
                 let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![input.clone().shape.iter().sum()], weights, Layout::RowMajor);
                 let mut current_output_el = multiply_scalar_generic(weights_matrix.clone(), el.clone());
-                println!("{:?} * {:?} = {:?}", weights_matrix, el, current_output_el);
+                //println!("{:?} * {:?} = {:?}", weights_matrix, el, current_output_el);
                 let iterator : MatrixIter<T> = MatrixIter {
                     mat: &current_output_el,
                     index: vec![0; input.shape().len()],
