@@ -1,19 +1,21 @@
 use std::collections::{HashMap, VecDeque};
+use std::ops::{Add, AddAssign, Mul, MulAssign};
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
+use crate::tensor_library::layout::Layout;
 use crate::tensor_library::layout::Layout::RowMajor;
-use crate::tensor_library::matrix::{Matrix, multiply_1d, multiply_2d};
+use crate::tensor_library::matrix::{Matrix, MatrixIter, multiply_1d, multiply_2d, multiply_scalar};
 
 // TODO: Add tests and examples for everything
 
-pub struct Nnet<T> where T : Clone + Default {
+pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign {
     // HashMap <id, (&Layer, weights, biases)>
     layers : HashMap<usize, (LayerType<T>, Vec<i32>, Vec<i32>)>,
     // HashMap <from_layer, to_layer>
     nodes : HashMap<Option<usize>, Option<usize>>,
 }
 
-impl<T> Nnet<T> where T : Clone + Default {
+impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign {
     pub fn new() -> Nnet<T> {
         Nnet {
             layers: HashMap::new(),
@@ -86,27 +88,53 @@ impl<T> Nnet<T> where T : Clone + Default {
         };
         let (first_layer, weights, biases) = self.layers.get(&first_layer_id).unwrap();
         if input.shape() != first_layer.get_input_shape() {
-            return Err("invalid input shape");
+            return Err("Invalid input shape!");
         }
         let mut layers_left : VecDeque<usize> = VecDeque::new();
-        // TODO(For Georgi): This used to be: self.nodes.push_back(*first_layer_id); - Check if my addition is what you meant
         layers_left.push_back(*first_layer_id);
         let mut current_input = input;
 
         while !layers_left.is_empty() {
             let current_layer_id  = layers_left.pop_back().unwrap();
-            let mut current_layer = self.layers.get_mut(&current_layer_id).unwrap();
+            let (current_layer, weights, biases) = self.layers.get_mut(&current_layer_id).unwrap();
             // Add next layers
-            let next_layers = self.nodes.iter().filter(|(from, to)| from.unwrap() == current_layer_id && !to.is_none()).map(|(a, b)| b.unwrap()).collect();
-            layers_left.push_back(next_layers);
+            let next_layers : Vec<usize> = self.nodes.iter()
+                .filter(|(from, to)| from.unwrap() == current_layer_id && !to.is_none())
+                .map(|(a, b)| b.unwrap()).collect();
+            for _layer in next_layers {
+                layers_left.push_back(_layer);
+            }
             // Forward propagation (could be in separate function)
-            let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![weights.len()], weights.clone(), RowMajor);
-            let (multiplied_input, weights_matrix, mut current_input) = multiply_2d(weights_matrix, current_input.clone()).unwrap();
 
-            let biases_matrix : Matrix<i32> = Matrix::from_iter(vec![biases.len()], biases.clone(), RowMajor);
-            let (forwarded_input, _biases_matrix, _multiplied_input) = multiply_2d(biases_matrix, multiplied_input.clone()).unwrap();
+            let mut result : Vec<T> = Vec::new();
+            let input_iterator : MatrixIter<T> = MatrixIter {
+                mat: &input,
+                index: vec![0; input.shape().len()],
+                current_el: None,
+                empty: false,
+            };
+            let mut ctr: usize = 0;
+            for (el, idx) in input_iterator {
+                let weights: Vec<i32> = weights.clone()[ctr*input.shape.iter().sum()..(ctr+1)*input.shape.iter().sum()].to_vec();
+                let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![input.shape.iter().sum()], weights, Layout::RowMajor);
+                let mut current_output_el = multiply_scalar(weights_matrix.clone(), el);
+                let iterator : MatrixIter<T> = MatrixIter {
+                    mat: &input,
+                    index: vec![0; input.shape().len()],
+                    current_el: None,
+                    empty: false,
+                };
+                let mut sum = T::default();
+                for (el, idx) in iterator {
+                    sum += el;
+                }
+                sum += biases.get(0).unwrap();
+                result.push(sum);
+                ctr+=1;
+            }
+            let forwarded_input: Matrix<T> = Matrix::from_iter(vec![result.len()], result, Layout::RowMajor);
             // Activation function (and other layer operations)
-            current_layer.0.forward(input.clone());
+            current_layer.forward(input.clone());
             current_input = forwarded_input;
         }
 

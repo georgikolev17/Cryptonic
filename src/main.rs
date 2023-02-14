@@ -1,11 +1,16 @@
 #![allow(non_snake_case)]
 
+use Cryptonic::neural_network::dense_layer::DenseLayer;
+use Cryptonic::neural_network::layer_type::LayerType;
 use Cryptonic::neural_network::nnet::Nnet;
 use Cryptonic::tensor_library::matrix::Matrix;
 
 fn main() {
-    // let l : dense_layer = dense_layer {};
-    // println!("{}", nnet.add_layer(&l, vec![1;5]));
-    // println!("{}", nnet.add_layer(&l, vec![1;5]));
-    // println!("{:?}", nnet.add_node(0, 1).unwrap());
+    let dense_layer1: DenseLayer<i32> = DenseLayer::new(Some(vec![2, 2]), Some(vec![2, 2]));
+    let dense_layer2 : DenseLayer<i32> = DenseLayer::new(Some(vec![2, 2]), Some(vec![2, 2]));
+
+    let mut network : Nnet<i32>  = Nnet::new();
+
+    let layer_type = LayerType::DenseLayer(dense_layer1);
+    network.add_layer(LayerType::DenseLayer(dense_layer1), )
 }
