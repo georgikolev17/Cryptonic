@@ -112,7 +112,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
 
             let mut result : Vec<T> = Vec::new();
             let input_iterator : MatrixIter<T> = MatrixIter {
-                mat: &input,
+                mat: &current_input,
                 index: vec![0; input.shape().len()],
                 current_el: None,
                 empty: false,
@@ -121,9 +121,10 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
             for (el, idx) in input_iterator {
                 let weights: Vec<i32> = weights.clone()[ctr*input.clone().shape.iter().sum::<usize>()..(ctr+1)*input.clone().shape.iter().sum::<usize>()].to_vec();
                 let weights_matrix : Matrix<i32> = Matrix::from_iter(vec![input.clone().shape.iter().sum()], weights, Layout::RowMajor);
-                let mut current_output_el = multiply_scalar_generic(weights_matrix.clone(), el);
+                let mut current_output_el = multiply_scalar_generic(weights_matrix.clone(), el.clone());
+                println!("{:?} * {:?} = {:?}", weights_matrix, el, current_output_el);
                 let iterator : MatrixIter<T> = MatrixIter {
-                    mat: &input,
+                    mat: &current_output_el,
                     index: vec![0; input.shape().len()],
                     current_el: None,
                     empty: false,
@@ -132,10 +133,11 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
                 for (el, idx) in iterator {
                     sum += el;
                 }
-                sum = sum + *biases.get(0).unwrap();
+                sum = sum + *biases.get(idx[0]).unwrap();
                 result.push(sum);
                 ctr+=1;
             }
+
             let forwarded_input: Matrix<T> = Matrix::from_iter(vec![result.len()], result, Layout::RowMajor);
             // Activation function (and other layer operations)
             current_layer.forward(input.clone());
