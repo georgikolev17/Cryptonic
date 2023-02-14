@@ -2,6 +2,7 @@
 
 use std::fmt::{Debug, Display};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
+use crate::cryptography::type_traits::MulWithScalar;
 use crate::tensor_library::errors::MatrixError;
 use crate::tensor_library::layout::Layout;
 use crate::tensor_library::utils::{calc_concat_shape, calc_strides_from_shape, check_concat_dims};
@@ -777,6 +778,50 @@ pub fn multiply_scalar<T>(mut lhs: Matrix<T>, rhs: T) -> Matrix<T> where T: Clon
     lhs
 }
 
+
+/// Given a matrix and a scalar we return the result of the multiplication of every element of the
+/// matrix with the scalar.
+///
+/// In the future we might create a specific type: Scalar. To preserve backwards compatibility we'll
+/// most likely give the function a different method and use the new function internally.
+///
+/// The method takes ownership of rhs and lhs for it's duration and then returns it. In the future
+/// we'll most likely add a feature to take them by reference.
+/// # Examples
+///
+/// ```
+/// use Cryptonic::tensor_library::layout::Layout;
+/// use Cryptonic::tensor_library::matrix::{Matrix, MatrixIter, multiply_scalar};
+/// let mut lhs: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut lhs_dup: Matrix<i32> = Matrix::from_iter(vec![2, 2], 1..,Layout::RowMajor);
+/// let mut x = multiply_scalar(lhs, 5);
+///
+///     let mut matrix_iter = MatrixIter {
+///         mat: &x,
+///         index: vec![0; x.shape().len()],
+///         current_el: None,
+///         empty: false,
+///     };
+///
+///     let mut matrix_iter_dup = MatrixIter {
+///         mat: &lhs_dup,
+///         index: vec![0; x.shape().len()],
+///         current_el: None,
+///         empty: false,
+///     };
+///
+///     for ((item, idx), (item_2, idx_2)) in matrix_iter.zip(matrix_iter_dup) {
+///         assert_eq!(item, item_2 * 5) // Should return all 5, 10, 15, etc.
+///     }
+/// ```
+///
+pub fn multiply_scalar_diff_type<T>(mut lhs: Matrix<T>, rhs: i32) -> Matrix<T> where T: Clone + Default + Mul + Mul<Output = T> + MulAssign + MulWithScalar<T>, <T as Mul>::Output: Clone + Default{
+    for i in 0..lhs.data.len(){
+        lhs.data[i] = MulWithScalar(lhs.data[i].clone(), rhs.clone());
+    }
+    lhs
+}
+
 /*
 /// Given a two matrices we return the result of the multiplication of them. The API user should be
 /// careful of the fact that we change the shape and strides of the given matrices so if he needs
@@ -982,8 +1027,8 @@ pub fn multiply_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> MulRetType1D<T> where T
 ///     println!("{}", matmul); // Should print 45
 /// ```
 /// This was added due to clippy warnings
-type MulByRetType1D<T> = Result<(Matrix<T>, Matrix<T>, Matrix<T>), MatrixError>;
-pub fn multiplyby_1d<T>(lhs: Matrix<T>, rhs: Matrix<T>) -> MulByRetType1D<T> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
+type MulByRetType1D<T> = Result<(Matrix<T>, Matrix<T>, Matrix<i32>), MatrixError>;
+pub fn multiplyby_1d<T>(lhs: Matrix<T>, rhs: Matrix<i32>) -> MulByRetType1D<T> where T: Display + Clone + Default + Mul + Mul<Output = T> + MulAssign + AddAssign, <T as Mul>::Output: Clone + Default{
     if rhs.shape.len() != 1 {
         return Err(MatrixError::MatmulShapeError);
     }

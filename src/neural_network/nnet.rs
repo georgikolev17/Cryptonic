@@ -47,6 +47,7 @@ impl<T> Nnet<T> where T : Clone + Default + AddAssign + MulAssign {
     /// # Example:
     ///```
     /// use Cryptonic::layers::dense_layer;
+    /// use Cryptonic::neural_network::nnet::Nnet;
     /// use Cryptonic::nnet::Nnet;
     /// let mut nnet : Nnet<dense_layer> = Nnet::new();
     /// let l : dense_layer = dense_layer {};
