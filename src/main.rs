@@ -25,7 +25,7 @@ fn main() {
     let _x = network.add_node(Some(id1), Some(id2));
     let _x = network.add_node(Some(id2), None);
 
-    let input = vec![12, 19];
+    let input = vec![12, 42];
     let input_matrix : Matrix<i32> = Matrix::from_iter(vec![input.len()], input, Layout::RowMajor);
 
     let result = network.forward(input_matrix).unwrap();
