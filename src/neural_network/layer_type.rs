@@ -10,7 +10,7 @@ pub enum LayerType<T> {
 impl<T> Layer for LayerType<T> {
     type CType = T;
 
-    fn forward(&mut self, input : Matrix<T>)  -> &Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
+    fn forward(&mut self, input : Matrix<T>)  -> Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
         match self {
             // When a layer is implemented, it will be added here
             LayerType::DenseLayer(dense_layer) => return dense_layer.forward(input),

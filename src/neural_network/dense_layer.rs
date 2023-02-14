@@ -11,8 +11,8 @@ pub struct DenseLayer<T> {
 impl<T> Layer for DenseLayer<T> {
     type CType = T;
 
-    fn forward(&mut self, input: Matrix<Self::CType>) -> &Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
-        &input
+    fn forward(&mut self, input: Matrix<Self::CType>) -> Matrix<Self::CType> where <Self as Layer>::CType: Clone + Default {
+        input
     }
 
     fn get_input_shape(&self) -> &Vec<usize> {

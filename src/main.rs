@@ -12,5 +12,5 @@ fn main() {
     let mut network : Nnet<i32>  = Nnet::new();
 
     let layer_type = LayerType::DenseLayer(dense_layer1);
-    network.add_layer(LayerType::DenseLayer(dense_layer1), )
+    // network.add_layer(LayerType::DenseLayer(dense_layer1), )
 }
