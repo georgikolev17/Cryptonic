@@ -10,7 +10,7 @@ fn main() {
     let dense_layer1: DenseLayer<i32> = DenseLayer::new(Some(vec![2]), Some(vec![2]));
     let layer1 = LayerType::DenseLayer(dense_layer1);
     let weights1 : Vec<i32> = vec![2 ; 4];
-    let biases1 : Vec<i32> = vec![10; 2];
+    let biases1 : Vec<i32> = vec![0; 2];
 
     let dense_layer2 : DenseLayer<i32> = DenseLayer::new(Some(vec![2]), Some(vec![2]));
     let layer2 = LayerType::DenseLayer(dense_layer2);
