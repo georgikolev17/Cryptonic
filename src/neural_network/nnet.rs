@@ -1,5 +1,3 @@
-// use std::async_iter::from_iter;
-use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 // This import was deprecated
@@ -7,7 +5,7 @@ use std::ops::{Add, AddAssign, Mul, MulAssign};
 use crate::neural_network::layer_trait::Layer;
 
 use ndarray::prelude::*;
-use ndarray::{Array, Ix3, IxDynImpl};
+use ndarray::Array;
 
 
 // TODO: Add tests and examples for everything
@@ -71,11 +69,12 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
             return Err("You have not initialised the weights for this neural network!");
         }
         let mut current_input = input;
-        for mut layer in &self.layers {
+
+        for layer in &self.layers {
             let weights = layer.get_weights();
             let bias = layer.get_bias();
             // TODO: Multiply current_input and add the bias
-            let result = current_input.clone()*weights + bias;
+            let result = current_input*weights + bias;
 
             current_input = layer.forward(result);
         }
@@ -87,7 +86,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
     /// ```
     ///
     /// ```
-    pub fn initialise_weights(&mut self, weights : Vec<Array<T, Ix1>>) ->Result<(), String> {
+    pub fn initialise_weights(&mut self, weights : Vec<Array<i32, Ix1>>) ->Result<(), String> {
         if weights.len() != (self.layers.len()-1) {
             return Err(format!("{} sets of weights expected. Received {}!", self.layers.len()-1, weights.len()));
         }
@@ -99,12 +98,12 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
         Ok(())
     }
     /// Initialises the biases
-    pub fn initialise_biases(&mut self, biases : Vec<T>) ->Result<(), String> {
+    pub fn initialise_biases(&mut self, biases : Vec<i32>) ->Result<(), String> {
         if biases.len() != (self.layers.len()-1) {
             return Err(format!("{} biases expected. Received {}!", self.layers.len()-1, biases.len()));
         }
         for i in 0..self.layers.len()-2 {
-            self.layers[i].change_bias(biases[i].clone())
+            self.layers[i].change_bias(biases[i])
         }
         self.are_biases_initialised = true;
         Ok(())
