@@ -19,11 +19,12 @@ mod test_layers {
     use Cryptonic::neural_network::nnet::Nnet;
 
     #[test]
-    fn test_creating_a_new_layer() {
+    fn test_layer_shape() {
         let layer : DenseLayer<i32> = DenseLayer::new(vec![3, 2]);
         let input_shape : Vec<usize> = vec![3, 2];
         assert_eq!(layer.get_input_shape(), &input_shape);
     }
+
 }
 
 /*

@@ -13,11 +13,11 @@ pub struct DenseLayer<T> {
     input_shape : Vec<usize>,
     output_shape : Vec<usize>,
     _phantom : PhantomData<T>,
-    weights: Array<i32, Ix1>,
-    bias: i32,
+    weights: Array<T, Ix1>,
+    bias: T,
 }
 
-impl<T> Layer<T> for DenseLayer<T> {
+impl<T> Layer<T> for DenseLayer<T> where T : Copy {
 
     fn forward(&mut self, input: ArrayD<T>) -> ArrayD<T> {
         input
@@ -31,33 +31,33 @@ impl<T> Layer<T> for DenseLayer<T> {
         &self.output_shape
     }
 
-    fn get_weights(&self) -> &Array<i32, Ix1> {
+    fn get_weights(&self) -> &Array<T, Ix1> {
         &self.weights
     }
 
-    fn get_bias(&self) -> i32 {
-        self.bias
+    fn get_bias(&self) -> &T {
+        &self.bias
     }
 
-    fn change_weights(&mut self, new_weights: Array<i32, Ix1>) {
+    fn change_weights(&mut self, new_weights: Array<T, Ix1>) {
         for i in 0..(self.weights.len()-1) {
             self.weights[i] = new_weights[i];
         }
     }
 
-    fn change_bias(&mut self, new_bias: i32) {
+    fn change_bias(&mut self, new_bias: T) {
         self.bias = new_bias;
     }
 }
 
-impl<T> DenseLayer<T> {
+impl<T> DenseLayer<T> where T : Default {
     pub fn new(layer_shape : Vec<usize>) -> DenseLayer<T> {
         DenseLayer {
             input_shape : layer_shape.clone(),
             output_shape : layer_shape.clone(),
             _phantom : PhantomData::default(),
             weights : Array::default(0),
-            bias : 0
+            bias : T::default()
         }
     }
 }
