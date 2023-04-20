@@ -21,7 +21,7 @@ pub struct CipherTextType{
 /// Ciphertext or for ServerKey.
 ///
 impl CipherTextType{
-    fn new(_CipherTxt: RadixCiphertext<KeyswitchBootstrap>, _PublicKey: PublicKeyBig, _ServerKey: ServerKey) -> CipherTextType{
+    pub fn new(_CipherTxt: RadixCiphertext<KeyswitchBootstrap>, _PublicKey: PublicKeyBig, _ServerKey: ServerKey) -> CipherTextType{
         CipherTextType{
             CipherTxt: _CipherTxt,
             PublicKey: _PublicKey.clone(),
@@ -30,8 +30,8 @@ impl CipherTextType{
             IfDefRandClientKey: None
         }
     }
-    fn is_def(&self) -> bool {
-        if self.IfDefRandClientKey.is_none() {
+    pub fn is_def(&self) -> bool {
+        if self.IfDefRandClientKey.is_some() {
             return true;
         }
         false
@@ -78,10 +78,11 @@ impl Mul for CipherTextType {
     type Output = Option<CipherTextType>;
 
     fn mul(mut self, mut rhs: Self) -> Self::Output {
-        if !self.is_def() || !rhs.is_def() {
+
+        if !self.is_def() && !rhs.is_def() {
             let _ciphertext = self.ServerKey.smart_mul(&mut self.CipherTxt, &mut rhs.CipherTxt);
 
-            Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
         }
         None
     }
@@ -95,7 +96,7 @@ impl Sub for CipherTextType {
         if !self.is_def() || !rhs.is_def() {
             let _ciphertext = self.ServerKey.unchecked_sub(&self.CipherTxt, &rhs.CipherTxt);
 
-            Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
         }
         None
     }
@@ -134,12 +135,6 @@ impl Add<i32> for CipherTextType {
             let _sum = self.ServerKey.unchecked_scalar_add(&self.CipherTxt, rhs as u64);
             return Some(CipherTextType::new(_sum, self.PublicKey, self.ServerKey));
         }
-        else if !self.is_def() {
-            return Some(self.clone());
-        }
-        else if self.is_def() {
-            return None;
-        }
         None
     }
 }
@@ -152,7 +147,7 @@ impl Mul<i32> for CipherTextType {
         if !self.is_def() {
             let _ciphertext = self.ServerKey.smart_mul(&mut self.CipherTxt, &mut self.PublicKey.encrypt_radix(rhs as u64, 8));
 
-            Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
         }
         None
     }
@@ -166,7 +161,7 @@ impl Sub<i32> for CipherTextType {
         if !self.is_def() {
             let _ciphertext = self.ServerKey.unchecked_scalar_sub(&self.CipherTxt, rhs as u64);
 
-            Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
         }
         None
     }

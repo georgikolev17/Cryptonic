@@ -11,9 +11,9 @@ use tfhe::shortint::{CarryModulus, MessageModulus, Parameters};
 
 /// This is used for testing and development. Security isn't guaranteed.
 pub const CUSTOM_PARAM_MESSAGE_2_CARRY_2: Parameters = Parameters {
-    lwe_dimension: LweDimension(53),
+    lwe_dimension: LweDimension(106),
     glwe_dimension: GlweDimension(1),
-    polynomial_size: PolynomialSize(128),
+    polynomial_size: PolynomialSize(256),
     lwe_modular_std_dev: StandardDev(0.000007069849454709433),
     glwe_modular_std_dev: StandardDev(0.00000000000000029403601535432533),
     pbs_base_log: DecompositionBaseLog(23),
