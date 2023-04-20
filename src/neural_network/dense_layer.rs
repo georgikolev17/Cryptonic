@@ -17,10 +17,9 @@ pub struct DenseLayer<T> {
     bias: i16,
 }
 
-impl<T: ndarray::RawData> Layer for DenseLayer<T> {
-    type CType = T;
+impl<T: ndarray::RawData> Layer<T> for DenseLayer<T> {
 
-    fn forward(&mut self, input: ArrayD<Self::CType>) -> Array<Self::CType, Dim<IxDynImpl>> where <Self as Layer>::CType: Clone + Default {
+    fn forward(&mut self, input: ArrayD<T>) -> ArrayD<T> {
         input
     }
 
@@ -58,7 +57,7 @@ impl<T> DenseLayer<T> {
             output_shape : layer_shape.clone(),
             _phantom : PhantomData::default(),
             weights : Array::zeros(20),
-            bias :
+            bias : 10
         }
     }
 }
