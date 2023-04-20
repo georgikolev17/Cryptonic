@@ -1,5 +1,5 @@
 use tfhe::integer::ciphertext::{RadixCiphertext};
-use tfhe::integer::{gen_keys_radix, RadixClientKey, ServerKey, PublicKeyBig};
+use tfhe::integer::{RadixClientKey, ServerKey, PublicKeyBig};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
 use tfhe::shortint::ciphertext::KeyswitchBootstrap;
 use crate::cryptography::key_gen::custom_gen_keys;
@@ -148,7 +148,7 @@ impl Add<i32> for CipherTextType {
 impl Mul<i32> for CipherTextType {
     type Output = Option<CipherTextType>;
 
-    fn mul(mut self, mut rhs: i32) -> Self::Output {
+    fn mul(mut self, rhs: i32) -> Self::Output {
         if !self.is_def() {
             let _ciphertext = self.ServerKey.smart_mul(&mut self.CipherTxt, &mut self.PublicKey.encrypt_radix(rhs as u64, 8));
 

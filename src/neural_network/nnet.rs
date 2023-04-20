@@ -1,5 +1,3 @@
-// use std::async_iter::from_iter;
-use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 // This import was deprecated
@@ -7,7 +5,7 @@ use std::ops::{Add, AddAssign, Mul, MulAssign};
 use crate::neural_network::layer_trait::Layer;
 
 use ndarray::prelude::*;
-use ndarray::{Array, Ix3, IxDynImpl};
+use ndarray::Array;
 
 
 // TODO: Add tests and examples for everything
@@ -71,13 +69,14 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
             return Err("You have not initialised the weights for this neural network!");
         }
         let mut current_input = input;
-        for mut layer in &self.layers {
+
+        for layer in &self.layers {
             let weights = layer.get_weights();
             let bias = layer.get_bias();
             // TODO: Multiply current_input and add the bias
-            //let result = current_input.;
+            let result = current_input*weights + bias;
 
-            //current_input = layer.forward(result);
+            current_input = layer.forward(result);
         }
         Ok(current_input)
     }

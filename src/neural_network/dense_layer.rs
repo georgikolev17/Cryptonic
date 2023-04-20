@@ -1,6 +1,5 @@
 use crate::neural_network::layer_trait::Layer;
 use std::marker::PhantomData;
-use ndarray::{IxDynImpl, OwnedRepr};
 use ndarray::prelude::*;
 
 /*
@@ -8,7 +7,7 @@ use ndarray::prelude::*;
     which is why the input shape is one-dimensional = Ix1
 
 */
-
+#[derive(Clone)]
 pub struct DenseLayer<T> {
     input_shape : Vec<usize>,
     output_shape : Vec<usize>,
@@ -19,7 +18,7 @@ pub struct DenseLayer<T> {
 
 impl<T> Layer<T> for DenseLayer<T> {
 
-    fn forward(&mut self, input: ArrayD<T>) -> ArrayD<T> {
+    fn forward(&self, input: ArrayD<T>) -> ArrayD<T> {
         input
     }
 
