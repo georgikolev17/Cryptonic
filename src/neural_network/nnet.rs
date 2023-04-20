@@ -61,7 +61,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
     /// ```
     ///
 
-    pub fn forward(&mut self, input: ArrayD<T>) -> Result<(ArrayD<T>), &str> {
+    pub fn forward(&mut self, input: Array<T, IxDyn>) -> Result<(Array<T, IxDyn>), &str> {
         if !self.are_biases_initialised {
             return Err("You have not initialised the biases for this neural network!");
         }
@@ -74,7 +74,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
             let weights = layer.get_weights();
             let bias = layer.get_bias();
             // TODO: Multiply current_input and add the bias
-            let result = current_input*weights + bias;
+            let result = current_input.into_dimensionality::<Ix1>().unwrap().dot(weights) + bias;
 
             current_input = layer.forward(result);
         }

@@ -39,9 +39,7 @@ impl<T> Layer<T> for DenseLayer<T> where T : Copy {
     }
 
     fn change_weights(&mut self, new_weights: Array<i32, Ix1>) {
-        for i in 0..(self.weights.len()-1) {
-            self.weights[i] = new_weights[i];
-        }
+        self.weights = new_weights;
     }
 
     fn change_bias(&mut self, new_bias: i32) {
