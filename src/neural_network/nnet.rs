@@ -7,6 +7,7 @@ use std::ops::{Add, AddAssign, Mul, MulAssign};
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
 
+use ndarray::prelude::*;
 
 // TODO: Add tests and examples for everything
 pub struct Link(Option<usize>, Option<usize>);
