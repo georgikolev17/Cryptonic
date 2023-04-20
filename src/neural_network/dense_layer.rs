@@ -13,11 +13,11 @@ pub struct DenseLayer<T> {
     input_shape : Vec<usize>,
     output_shape : Vec<usize>,
     _phantom : PhantomData<T>,
-    weights: Array<i16, Ix1>,
-    bias: i16,
+    weights: Array<i32, Ix1>,
+    bias: i32,
 }
 
-impl<T: ndarray::RawData> Layer<T> for DenseLayer<T> {
+impl<T> Layer<T> for DenseLayer<T> {
 
     fn forward(&mut self, input: ArrayD<T>) -> ArrayD<T> {
         input
@@ -31,21 +31,21 @@ impl<T: ndarray::RawData> Layer<T> for DenseLayer<T> {
         &self.output_shape
     }
 
-    fn get_weights(&self) -> &Array<i16, Ix1> {
+    fn get_weights(&self) -> &Array<i32, Ix1> {
         &self.weights
     }
 
-    fn get_bias(&self) -> i16 {
+    fn get_bias(&self) -> i32 {
         self.bias
     }
 
-    fn change_weights(&mut self, new_weights: Array<i16, Ix1>) {
+    fn change_weights(&mut self, new_weights: Array<i32, Ix1>) {
         for i in 0..(self.weights.len()-1) {
             self.weights[i] = new_weights[i];
         }
     }
 
-    fn change_bias(&mut self, new_bias: i16) {
+    fn change_bias(&mut self, new_bias: i32) {
         self.bias = new_bias;
     }
 }
@@ -56,8 +56,8 @@ impl<T> DenseLayer<T> {
             input_shape : layer_shape.clone(),
             output_shape : layer_shape.clone(),
             _phantom : PhantomData::default(),
-            weights : Array::zeros(20),
-            bias : 10
+            weights : Array::default(0),
+            bias : 0
         }
     }
 }
