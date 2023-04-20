@@ -3,8 +3,6 @@
 use Cryptonic::neural_network::dense_layer::DenseLayer;
 use Cryptonic::neural_network::layer_type::LayerType;
 use Cryptonic::neural_network::nnet::Nnet;
-use Cryptonic::tensor_library::layout::Layout;
-use Cryptonic::tensor_library::matrix::Matrix;
 
 fn main() {
     let dense_layer1: DenseLayer<i32> = DenseLayer::new(Some(vec![2]), Some(vec![2]));

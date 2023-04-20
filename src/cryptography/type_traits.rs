@@ -1,4 +1,5 @@
-// DEPRECATED
+// DEPRECATEDuse crate::tensor_library::matrix::Matrix;
+
 /*
 pub trait MyAdd<Rhs = i32> {
     type Output;

@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 use crate::neural_network::layer_trait::Layer;
-use crate::tensor_library::matrix::Matrix;
 
 pub struct DenseLayer<T> {
     input_shape : Vec<usize>,

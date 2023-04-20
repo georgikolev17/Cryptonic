@@ -6,9 +6,7 @@ use std::ops::{Add, AddAssign, Mul, MulAssign};
 // use crate::cryptography::type_traits::{MyAdd, MyMul};
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
-use crate::tensor_library::layout::Layout;
-use crate::tensor_library::layout::Layout::RowMajor;
-use crate::tensor_library::matrix::{Matrix, MatrixIter, multiply_1d, multiply_2d, multiply_scalar, multiply_scalar_generic};
+
 
 // TODO: Add tests and examples for everything
 pub struct Link(Option<usize>, Option<usize>);

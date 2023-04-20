@@ -1,4 +1,3 @@
-use crate::tensor_library::matrix::Matrix;
 
 pub trait Layer {
     type CType;

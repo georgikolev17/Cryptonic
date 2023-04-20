@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 use crate::neural_network::layer_trait::Layer;
-use crate::tensor_library::matrix::Matrix;
 
 /// This is layer for testing the neural network
 /// It is not for real use

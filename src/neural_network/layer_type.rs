@@ -1,7 +1,6 @@
 use crate::neural_network::dense_layer::DenseLayer;
 use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::test_layer::TestLayer;
-use crate::tensor_library::matrix::Matrix;
 
 pub enum LayerType<T> {
     // When a layer is implemented, it will be added here
