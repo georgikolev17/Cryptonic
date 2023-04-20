@@ -1,5 +1,6 @@
-use std::marker::PhantomData;
 use crate::neural_network::layer_trait::Layer;
+use std::marker::PhantomData;
+use ndarray::{IxDynImpl, OwnedRepr};
 use ndarray::prelude::*;
 
 /*
@@ -9,38 +10,32 @@ use ndarray::prelude::*;
 */
 
 pub struct DenseLayer<T> {
-    input_shape : Array<usize, Ix1>,
-    output_shape : Array<usize, Ix1>,
+    input_shape : Vec<usize>,
+    output_shape : Vec<usize>,
     _phantom : PhantomData<T>
 }
 
-impl<T, D: Dimension> Layer<D> for DenseLayer<T> {
+impl<T: ndarray::RawData> Layer for DenseLayer<T> {
     type CType = T;
 
-    fn forward(&mut self, input: Array<Self::CType, Ix1>) -> Array<Self::CType, Ix1> where <Self as Layer<D>>::CType: Clone + Default {
+    fn forward(&mut self, input: Array<Self::CType, Dim<IxDynImpl>>) -> Array<Self::CType, Dim<IxDynImpl>> where <Self as Layer>::CType: Clone + Default {
         input
     }
 
-    fn get_input_shape(&self) -> &Array<usize, D> {
+    fn get_input_shape(&self) -> &Vec<usize> {
         &self.input_shape
     }
 
-    fn get_output_shape(&self) -> &Array<usize, D> {
+    fn get_output_shape(&self) -> &Vec<usize> {
         &self.output_shape
     }
 }
 
 impl<T> DenseLayer<T> {
-    pub fn new(input_shape : Option<Array<usize, Ix1>>, output_shape : Option<Array<usize, Ix1>>) -> DenseLayer<T> {
+    pub fn new(layer_shape : Vec<usize>) -> DenseLayer<T> {
         DenseLayer {
-            input_shape : match input_shape {
-                Some(shape) => shape,
-                None => Vec::new()
-            },
-            output_shape : match output_shape {
-                Some(shape) => shape,
-                None => Vec::new()
-            },
+            input_shape : layer_shape.clone(),
+            output_shape : layer_shape.clone(),
             _phantom : PhantomData::default(),
         }
     }
