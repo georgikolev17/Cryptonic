@@ -8,7 +8,7 @@ use crate::neural_network::layer_trait::Layer;
 use crate::neural_network::layer_type::LayerType;
 
 use ndarray::prelude::*;
-use ndarray::{Array, Ix3};
+use ndarray::{Array, Ix3, IxDynImpl};
 
 // TODO: Add tests and examples for everything
 pub struct Link(Option<usize>, Option<usize>);
@@ -60,10 +60,14 @@ impl<T, D:Dimension> Nnet<T, D:Dimension> where T : Clone + Default + Debug + Ad
     /// ```
     ///
 
-    pub fn forward(&mut self, input: Matrix<T>) -> Result<(Matrix<T>), &str> {
-        let current_input = input;
+    pub fn forward(&mut self, input: ArrayD<Self::CType>) -> Result<(ArrayD<Self::CType>), &str> {
+        let mut current_input = input;
         for mut layer in self.layers {
-            current_input = layer.forward(current_input);
+            let weights = layer.get_weights();
+            let bias = layer.get_bias();
+            let result = current_input * weights + bias;
+
+            current_input = layer.forward(result);
         }
         Ok(current_input)
         // // let first_layer_id = match &self.get_first_layer_id() {
