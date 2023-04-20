@@ -6,7 +6,6 @@ use ndarray::prelude::*;
     In the case of the dense layer input shape will be equal to the size of the layer
     which is why the input shape is one-dimensional = Ix1
 
-    This could l
 */
 
 pub struct DenseLayer<T> {
@@ -18,7 +17,7 @@ pub struct DenseLayer<T> {
 impl<T, D: Dimension> Layer<D> for DenseLayer<T> {
     type CType = T;
 
-    fn forward(&mut self, input: Array<Self::CType, D>) -> Array<Self::CType, D> where <Self as Layer<D>>::CType: Clone + Default {
+    fn forward(&mut self, input: Array<Self::CType, Ix1>) -> Array<Self::CType, Ix1> where <Self as Layer<D>>::CType: Clone + Default {
         input
     }
 
@@ -31,8 +30,8 @@ impl<T, D: Dimension> Layer<D> for DenseLayer<T> {
     }
 }
 
-impl<T, D: Dimension> DenseLayer<T> {
-    pub fn new(input_shape : Option<Array<usize, D>>, output_shape : Option<Array<usize, D>>) -> DenseLayer<T> {
+impl<T> DenseLayer<T> {
+    pub fn new(input_shape : Option<Array<usize, Ix1>>, output_shape : Option<Array<usize, Ix1>>) -> DenseLayer<T> {
         DenseLayer {
             input_shape : match input_shape {
                 Some(shape) => shape,
