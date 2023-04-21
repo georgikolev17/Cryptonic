@@ -3,5 +3,4 @@
 
 pub mod layer_trait;
 pub mod dense_layer;
-pub mod activations;
 pub mod nnet;
