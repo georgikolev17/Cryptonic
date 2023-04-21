@@ -1,7 +1,9 @@
-use ndarray::{Array, array, Ix1, IxDyn};
-use Cryptonic::cryptography::ciphtxt;
-use Cryptonic::cryptography::ciphtxt::CipherTextType;
-use Cryptonic::cryptography::key_gen::custom_gen_keys;
+// use ndarray::{Array, array, Ix1, IxDyn};
+// use Cryptonic::cryptography::ciphtxt;
+// use Cryptonic::cryptography::ciphtxt::CipherTextType;
+// use Cryptonic::cryptography::key_gen::{custom_gen_keys, first_key_gen_once};
+
+use Cryptonic::examples::simple_net::inclusive_or_net;
 
 fn main() {
     // // Define the linear array
@@ -22,28 +24,29 @@ fn main() {
     //
     // println!("{:?}", res);
 
-    let (rck, sk, pk) = custom_gen_keys();
-    let raw_cipher_text1 = pk.encrypt_radix(5u64, 8);
-    let raw_cipher_text2 = pk.encrypt_radix(10u64, 8);
-    let raw_cipher_text3 = pk.encrypt_radix(15u64, 8);
-    let raw_cipher_text4 = pk.encrypt_radix(20u64, 8);
-
-    let myCipherTxt1 = CipherTextType::new(raw_cipher_text1, pk.clone(), sk.clone());
-    let myCipherTxt2 = CipherTextType::new(raw_cipher_text2, pk.clone(), sk.clone());
-    let myCipherTxt3 = CipherTextType::new(raw_cipher_text3, pk.clone(), sk.clone());
-    let myCipherTxt4 = CipherTextType::new(raw_cipher_text4, pk.clone(), sk.clone());
-
-
-    let arr_cr1 = array![myCipherTxt1, myCipherTxt2];
-    let arr_cr2 = array![myCipherTxt3, myCipherTxt4];
-
-    let arr_i32_1 = array![1i32,5i32];
-
-    let res = arr_cr1.clone() + arr_i32_1.clone();
-    let mul = arr_cr1 * arr_i32_1;
-    //let dot = arr_cr1.dot(&arr_cr2);
-    for elem in res {
-        println!("{:?}", rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&elem.CipherTxt));
-    }
+    // let (rck, sk, pk) = custom_gen_keys();
+    // let raw_cipher_text1 = pk.encrypt_radix(5u64, 8);
+    // let raw_cipher_text2 = pk.encrypt_radix(10u64, 8);
+    // let raw_cipher_text3 = pk.encrypt_radix(15u64, 8);
+    // let raw_cipher_text4 = pk.encrypt_radix(20u64, 8);
+    //
+    // let myCipherTxt1 = CipherTextType::new(raw_cipher_text1, pk.clone(), sk.clone());
+    // let myCipherTxt2 = CipherTextType::new(raw_cipher_text2, pk.clone(), sk.clone());
+    // let myCipherTxt3 = CipherTextType::new(raw_cipher_text3, pk.clone(), sk.clone());
+    // let myCipherTxt4 = CipherTextType::new(raw_cipher_text4, pk.clone(), sk.clone());
+    //
+    //
+    // let arr_cr1 = array![myCipherTxt1, myCipherTxt2];
+    // let arr_cr2 = array![myCipherTxt3, myCipherTxt4];
+    //
+    // let arr_i32_1 = array![1i32,5i32];
+    //
+    // let res = arr_cr1.clone() + arr_i32_1.clone();
+    // let mul = arr_cr1 * arr_i32_1;
+    // //let dot = arr_cr1.dot(&arr_cr2);
+    // for elem in mul {
+    //     println!("{:?}", rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&elem.CipherTxt));
+    // }
+    inclusive_or_net(true, false);
 }
 
