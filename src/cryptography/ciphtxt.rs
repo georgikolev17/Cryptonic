@@ -201,10 +201,9 @@ impl Dot<Self> for CipherTextType {
     }
 }
 
-
+*/
 impl Debug for CipherTextType{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.PublicKey)
+        write!(f, "Not Implemented!")
     }
 }
-*/

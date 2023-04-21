@@ -11,14 +11,14 @@ use ndarray::Array;
 // TODO: Add tests and examples for everything
 pub struct Link(Option<usize>, Option<usize>);
 
-pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign  + Add<i32, Output = T>, i32 : Mul<T> + Add<T> {
+pub struct Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T> {
     // HashMap <id, (&Layer, biases)>
     pub layers : Vec<Box<dyn Layer<T>>>,
     pub are_weights_initialised : bool,
     pub are_biases_initialised : bool
 }
 
-impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T>, i32: Mul<T>, i32 : Mul<T> + Add<T> {
+impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T> {
     pub fn new() -> Nnet<T> {
         Nnet {
             layers: Vec::new(),
