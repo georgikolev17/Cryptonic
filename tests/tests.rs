@@ -242,19 +242,13 @@ mod test_neural_network {
     #[test]
     fn forward_ciphertext_test() {
         let (rck, sk, pk) = custom_gen_keys();
-        let raw_cipher_text1 = pk.encrypt_radix(5u64, 8);
-        let raw_cipher_text2 = pk.encrypt_radix(10u64, 8);
-        let raw_cipher_text3 = pk.encrypt_radix(15u64, 8);
-        //let raw_cipher_text4 = pk.encrypt_radix(20u64, 8);
+        let raw_cipher_text1 = pk.encrypt_radix(1u64, 8);
+        let raw_cipher_text2 = pk.encrypt_radix(5u64, 8);
+        let raw_cipher_text3 = pk.encrypt_radix(10u64, 8);
 
         let myCipherTxt1 = CipherTextType::new(raw_cipher_text1, pk.clone(), sk.clone());
         let myCipherTxt2 = CipherTextType::new(raw_cipher_text2, pk.clone(), sk.clone());
         let myCipherTxt3 = CipherTextType::new(raw_cipher_text3, pk.clone(), sk.clone());
-        //let myCipherTxt4 = CipherTextType::new(raw_cipher_text4, pk.clone(), sk.clone());
-
-
-        //let arr_cr1 = array![myCipherTxt1, myCipherTxt2];
-        //let arr_cr2 = array![myCipherTxt3, myCipherTxt4];
 
         // Initialise the neural network
         let mut nn : Nnet<CipherTextType> = Nnet::new();
@@ -281,7 +275,6 @@ mod test_neural_network {
 
         let res1 = rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>( &nn.forward(input.clone()).unwrap()[0].CipherTxt);
         let res2 = rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>( &nn.forward(input.clone()).unwrap()[1].CipherTxt);
-
 
         assert_eq!(res1, expected_res[0]);
         assert_eq!(res2, expected_res[1]);
