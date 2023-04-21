@@ -2,7 +2,7 @@ use crate::cryptography::ciphtxt::CipherTextType;
 use tfhe::integer::ciphertext::RadixCiphertext;
 use tfhe::integer::RadixClientKey;
 use tfhe::shortint::ciphertext::KeyswitchBootstrap;
-
+/*
 // Considering we're working with 16-bit unsigned integers our range
 // will be from 0-65536, with a midpoint at 32,768 which we'll consider
 // as our zero
@@ -16,6 +16,7 @@ pub fn binary_step(mut item: CipherTextType) -> RadixCiphertext<KeyswitchBootstr
     }
     one
 }
+*/
 
 pub fn relu(mut elem:CipherTextType, rck: RadixClientKey) -> RadixCiphertext<KeyswitchBootstrap>{
     let mut zero = elem.PublicKey.encrypt_radix(32768u64, 8);
