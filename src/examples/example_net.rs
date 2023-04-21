@@ -15,7 +15,7 @@ if A is true and B is false, then A or B is true.
 if A is false and B is true, then A or B is true.
 if A is false and B is false, then A or B is false.
 */
-pub fn inclusive_or_net(A: bool, B: bool){
+pub fn and_gate_net(A: bool, B: bool){
 
     // Set up encrypted data
     let (rck, sk, pk) = custom_gen_keys();
@@ -27,17 +27,34 @@ pub fn inclusive_or_net(A: bool, B: bool){
 
     // Initialise the layers
     let mut layer1 : DenseLayer<CipherTextType> = DenseLayer::new(vec![2]);
-    let mut layer2 : DenseLayer<CipherTextType> = DenseLayer::new(vec![1]);
+    let mut layer2 : DenseLayer<CipherTextType> = DenseLayer::new(vec![2]);
 
-    let biases = vec![0];
+    // Add the initialised layers to the neural network
+    nn.add_layer(Box::new(layer1));
+    nn.add_layer(Box::new(layer2));
+
+    let mut biases = vec![0];
+    biases[0] = 0;
     _ = nn.initialise_biases(biases);
 
     // Initialise weights
-    let weights = vec![array![0, 1]];
+    let weights = vec![array![1, 0, 0, 1]];
     _ = nn.initialise_weights(weights);
 
     // Test the forward method
     let input : Array<CipherTextType, IxDyn> = array![in_1, in_2].into_owned().into_dyn();
     let res =  &nn.forward(input.clone()).unwrap();
-    let final_result = rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&res[0].CipherTxt);
+    let final_result_1 = rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&res[0].CipherTxt);
+    let final_result_2 = rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&res[1].CipherTxt);
+
+    let mut frb_1 = false;
+    let mut frb_2 = false;
+    if final_result_1 == 1 {
+        frb_1 = true;
+    }
+    if final_result_2 == 1 {
+        frb_2 = true;
+    }
+
+    println!("{:?}", frb_1 && frb_2);
 }

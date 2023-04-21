@@ -1,1 +1,1 @@
-pub mod simple_net;
+pub mod example_net;

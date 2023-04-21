@@ -90,8 +90,8 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
                 let mut current_res : T = T::default();
                 for j in i*number_of_input_elements..(i+1)*number_of_input_elements {
                     let value = current_input[j%number_of_input_elements].clone()*weights[j];
-                    println!("{:?}", current_input[j%number_of_input_elements]);
-                    println!("{:?}", weights[j]);
+                    //println!("{:?}", current_input[j%number_of_input_elements]);
+                    //println!("{:?}", weights[j]);
 
                     current_res += value;
                 }

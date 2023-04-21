@@ -3,7 +3,8 @@
 // use Cryptonic::cryptography::ciphtxt::CipherTextType;
 // use Cryptonic::cryptography::key_gen::{custom_gen_keys, first_key_gen_once};
 
-use Cryptonic::examples::simple_net::inclusive_or_net;
+use Cryptonic::cryptography::key_gen::first_key_gen_once;
+use Cryptonic::examples::example_net::inclusive_or_net;
 
 fn main() {
     // // Define the linear array
@@ -47,6 +48,10 @@ fn main() {
     // for elem in mul {
     //     println!("{:?}", rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&elem.CipherTxt));
     // }
+    inclusive_or_net(true, true);
     inclusive_or_net(true, false);
+    inclusive_or_net(false, true);
+    inclusive_or_net(false, false);
+
 }
 
