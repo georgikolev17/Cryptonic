@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::ops::{Add, AddAssign, Mul, MulAssign};
+use std::ops::{Add, AddAssign, Deref, Mul, MulAssign};
 // This import was deprecated
 // use crate::cryptography::type_traits::{MyAdd, MyMul};
 use crate::neural_network::layer_trait::Layer;
@@ -14,11 +14,11 @@ pub struct Link(Option<usize>, Option<usize>);
 pub struct Nnet<T> where T : Clone + Default + AddAssign + MulAssign  + Add<i32, Output = T>, i32 : Mul<T> + Add<T> {
     // HashMap <id, (&Layer, biases)>
     pub layers : Vec<Box<dyn Layer<T>>>,
-    are_weights_initialised : bool,
-    are_biases_initialised : bool
+    pub are_weights_initialised : bool,
+    pub are_biases_initialised : bool
 }
 
-impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T>, i32: Mul<T>, i32 : Mul<T> + Add<T>{
+impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<i32, Output = T> + Mul<i32> + Mul<i32, Output = T>, i32: Mul<T>, i32 : Mul<T> + Add<T> {
     pub fn new() -> Nnet<T> {
         Nnet {
             layers: Vec::new(),
@@ -60,6 +60,8 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
     /// //nnet.add_link(0, 1);
     /// ```
     ///
+    ///0
+
 
     pub fn forward(&mut self, input: Array<T, IxDyn>) -> Result<(Array<T, IxDyn>), &str> {
         if !self.are_biases_initialised {
@@ -71,12 +73,28 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
         let mut current_input = input;
 
         for layer in &self.layers {
+            if layer.get_weights().shape() == &[0 as usize] {
+                continue;
+            }
             let weights = layer.get_weights();
             let bias = layer.get_bias();
-            // TODO: Multiply current_input and add the bias
-            let result = current_input.into_dimensionality::<Ix1>().unwrap().dot(weights) + bias;
 
-            current_input = layer.forward(result);
+            // Gets first dimension(i.e. size of previous layer)
+            let number_of_input_elements = current_input.shape()[0];
+
+            // Number of weights should be previous_layer_len * next_layer_len
+            let number_of_output_elements = weights.len()/number_of_input_elements;
+            let mut result = Vec::new();
+            for i in 0.. number_of_output_elements {
+                let mut current_res : T = T::default();
+                for j in i*number_of_input_elements..(i+1)*number_of_input_elements {
+                    let value = current_input[j%number_of_input_elements].clone()*weights[j];
+                    current_res += value;
+                }
+                current_res = current_res.clone() + bias;
+                result.push(current_res.clone());
+            }
+            current_input = Array::from_vec(result).into_dyn();
         }
         Ok(current_input)
     }
@@ -90,7 +108,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
         if weights.len() != (self.layers.len()-1) {
             return Err(format!("{} sets of weights expected. Received {}!", self.layers.len()-1, weights.len()));
         }
-        for i in 0..self.layers.len()-2 {
+        for i in 0..self.layers.len()-1 {
             // TODO: (Should work without this too) Check if current set of weights is appropriate. For example if the current layer has shape [2, 3] and the next has [3, 3], the number of weights in the current set should be equal to 2*3 * 3*3 = 54
             self.layers[i].change_weights(weights[i].clone())
         }
@@ -102,7 +120,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
         if biases.len() != (self.layers.len()-1) {
             return Err(format!("{} biases expected. Received {}!", self.layers.len()-1, biases.len()));
         }
-        for i in 0..self.layers.len()-2 {
+        for i in 0..self.layers.len()-1 {
             self.layers[i].change_bias(biases[i])
         }
         self.are_biases_initialised = true;
