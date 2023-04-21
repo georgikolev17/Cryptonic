@@ -134,11 +134,11 @@ impl Add<i32> for CipherTextType {
     type Output = CipherTextType;
 
     fn add(self, rhs: i32) -> Self::Output {
-        if !self.is_def() {
-            let _sum = self.ServerKey.unchecked_scalar_add(&self.CipherTxt, rhs as u64);
-            return CipherTextType::new(_sum, self.PublicKey, self.ServerKey);
-        }
-        CipherTextType::default()
+
+        // TODO: Add is_def() check
+        let _sum = self.ServerKey.unchecked_scalar_add(&self.CipherTxt, rhs as u64);
+        return CipherTextType::new(_sum, self.PublicKey, self.ServerKey);
+
     }
 }
 
@@ -204,6 +204,7 @@ impl Dot<Self> for CipherTextType {
 */
 impl Debug for CipherTextType{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Not Implemented!")
+        let (rck, sk, pk) = custom_gen_keys();
+        write!(f, "{:?}", rck.decrypt::<u64, tfhe::shortint::ciphertext::KeyswitchBootstrap>(&self.CipherTxt))
     }
 }

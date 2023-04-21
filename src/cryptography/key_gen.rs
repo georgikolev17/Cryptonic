@@ -2,6 +2,9 @@
 // I'll also implement ser/des functions whose results will be written directly to storage
 // and committed to allow faster build and test times.
 
+use std::fs::File;
+use std::io::BufWriter;
+use bincode::serialize_into;
 //use tfhe::shortint::prelude::*;
 //use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2;
 use tfhe::integer::{gen_keys_radix, RadixClientKey, ServerKey};
@@ -11,7 +14,7 @@ use tfhe::shortint::{CarryModulus, MessageModulus, Parameters};
 
 /// This is used for testing and development. Security isn't guaranteed.
 pub const CUSTOM_PARAM_MESSAGE_2_CARRY_2: Parameters = Parameters {
-    lwe_dimension: LweDimension(106),
+    lwe_dimension: LweDimension(53),
     glwe_dimension: GlweDimension(1),
     polynomial_size: PolynomialSize(128),
     lwe_modular_std_dev: StandardDev(0.000007069849454709433),
@@ -32,7 +35,22 @@ pub const CUSTOM_PARAM_MESSAGE_2_CARRY_2: Parameters = Parameters {
 
 
 pub fn custom_gen_keys() -> (RadixClientKey, ServerKey,PublicKeyBig) {
+    let mut file = File::open("serkeys.txt").unwrap();
+
+    let client_key: RadixClientKey = bincode::deserialize_from(&mut file).unwrap();
+    let server_key: ServerKey = bincode::deserialize_from(&mut file).unwrap();
+    let public_key: PublicKeyBig = bincode::deserialize_from(&mut file).unwrap();
+
+    (client_key, server_key, public_key)
+}
+
+pub fn first_key_gen_once(){
     let (client_key, server_key) = gen_keys_radix(&CUSTOM_PARAM_MESSAGE_2_CARRY_2, 8);
     let public_key = PublicKeyBig::new(&client_key);
-    (client_key, server_key, public_key)
+
+    let mut f = BufWriter::new(File::create("serkeys.txt").unwrap());
+
+    serialize_into(&mut f, &client_key).expect("TODO: panic message");
+    serialize_into(&mut f, &server_key).expect("TODO: panic message");
+    serialize_into(&mut f, &public_key).expect("TODO: panic message");
 }
