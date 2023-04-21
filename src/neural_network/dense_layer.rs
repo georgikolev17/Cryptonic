@@ -16,7 +16,7 @@ pub struct DenseLayer<T> {
     bias: i32,
 }
 
-impl<T> Layer<T> for DenseLayer<T> where T : Copy {
+impl<T> Layer<T> for DenseLayer<T> {
 
     fn forward(&self, input: ArrayD<T>) -> ArrayD<T> {
         input
