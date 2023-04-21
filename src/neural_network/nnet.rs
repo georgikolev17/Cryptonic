@@ -79,6 +79,7 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
             let weights = layer.get_weights();
             let bias = layer.get_bias();
 
+
             // Gets first dimension(i.e. size of previous layer)
             let number_of_input_elements = current_input.shape()[0];
 
@@ -89,9 +90,13 @@ impl<T> Nnet<T> where T : Clone + Default + Debug + AddAssign + MulAssign + Add<
                 let mut current_res : T = T::default();
                 for j in i*number_of_input_elements..(i+1)*number_of_input_elements {
                     let value = current_input[j%number_of_input_elements].clone()*weights[j];
+                    println!("{:?}", current_input[j%number_of_input_elements]);
+                    println!("{:?}", weights[j]);
+
                     current_res += value;
                 }
                 current_res = current_res.clone() + bias;
+
                 result.push(current_res.clone());
             }
             current_input = Array::from_vec(result).into_dyn();
