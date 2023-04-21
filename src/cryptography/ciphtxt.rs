@@ -1,8 +1,11 @@
+use std::fmt::{Debug, Formatter};
 use tfhe::integer::ciphertext::{RadixCiphertext};
 use tfhe::integer::{RadixClientKey, ServerKey, PublicKeyBig};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub};
+use ndarray::linalg::Dot;
 use tfhe::shortint::ciphertext::KeyswitchBootstrap;
 use crate::cryptography::key_gen::custom_gen_keys;
+use ndarray::prelude::*;
 
 /// This struct is here to allow fast and easy flexibility and to limit the future problems
 /// of using concrete_integer::RadixCiphertext directly.
@@ -56,49 +59,49 @@ impl Default for CipherTextType{
 
 /// Implements the Add trait
 impl Add for CipherTextType {
-    type Output = Option<CipherTextType>;
+    type Output = CipherTextType;
 
     fn add(self, rhs: Self) -> Self::Output {
         if !self.is_def() && !rhs.is_def() {
             let _sum = self.ServerKey.unchecked_add(&self.CipherTxt, &rhs.CipherTxt);
-            return Some(CipherTextType::new(_sum, self.PublicKey, self.ServerKey));
+            return CipherTextType::new(_sum, self.PublicKey, self.ServerKey);
         }
         else if !self.is_def() && rhs.is_def() {
-            return Some(self.clone());
+            return self.clone();
         }
         else if self.is_def() && !rhs.is_def() {
-            return Some(rhs.clone());
+            return rhs.clone();
         }
-        None
+        CipherTextType::default()
     }
 }
 
 /// Implements the Mul trait
 impl Mul for CipherTextType {
-    type Output = Option<CipherTextType>;
+    type Output = CipherTextType;
 
     fn mul(mut self, mut rhs: Self) -> Self::Output {
 
         if !self.is_def() && !rhs.is_def() {
             let _ciphertext = self.ServerKey.smart_mul(&mut self.CipherTxt, &mut rhs.CipherTxt);
 
-            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey);
         }
-        None
+        CipherTextType::default()
     }
 }
 
 /// Implements the Sub trait
 impl Sub for CipherTextType {
-    type Output = Option<CipherTextType>;
+    type Output = CipherTextType;
 
     fn sub(self, rhs: Self) -> Self::Output {
         if !self.is_def() || !rhs.is_def() {
             let _ciphertext = self.ServerKey.unchecked_sub(&self.CipherTxt, &rhs.CipherTxt);
 
-            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey);
         }
-        None
+        CipherTextType::default()
     }
 }
 
@@ -128,42 +131,42 @@ impl MulAssign for CipherTextType {
 
 /// Implements the Add trait
 impl Add<i32> for CipherTextType {
-    type Output = Option<CipherTextType>;
+    type Output = CipherTextType;
 
     fn add(self, rhs: i32) -> Self::Output {
         if !self.is_def() {
             let _sum = self.ServerKey.unchecked_scalar_add(&self.CipherTxt, rhs as u64);
-            return Some(CipherTextType::new(_sum, self.PublicKey, self.ServerKey));
+            return CipherTextType::new(_sum, self.PublicKey, self.ServerKey);
         }
-        None
+        CipherTextType::default()
     }
 }
 
 /// Implements the Mul trait
 impl Mul<i32> for CipherTextType {
-    type Output = Option<CipherTextType>;
+    type Output = CipherTextType;
 
     fn mul(mut self, rhs: i32) -> Self::Output {
         if !self.is_def() {
-            let _ciphertext = self.ServerKey.smart_mul(&mut self.CipherTxt, &mut self.PublicKey.encrypt_radix(rhs as u64, 8));
-
-            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            //let _ciphertext = self.ServerKey.smart_mul(, &mut self.PublicKey.encrypt_radix(rhs as u64, 8));
+            let _ciphertext = self.ServerKey.smart_scalar_mul(&mut self.CipherTxt, rhs as u64);
+            return CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey);
         }
-        None
+        CipherTextType::default()
     }
 }
 
 /// Implements the Sub trait
 impl Sub<i32> for CipherTextType {
-    type Output = Option<CipherTextType>;
+    type Output = CipherTextType;
 
     fn sub(self, rhs: i32) -> Self::Output {
         if !self.is_def() {
             let _ciphertext = self.ServerKey.unchecked_scalar_sub(&self.CipherTxt, rhs as u64);
 
-            return Some(CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey));
+            return CipherTextType::new(_ciphertext, self.PublicKey, self.ServerKey);
         }
-        None
+        CipherTextType::default()
     }
 }
 
@@ -187,3 +190,21 @@ impl MulAssign<i32> for CipherTextType {
         }
     }
 }
+
+
+/*
+impl Dot<Self> for CipherTextType {
+    type Output = Self;
+
+    fn dot(&self, rhs: &Self) -> Self::Output {
+        self.iter().zip(rhs.iter()).map(|(&a, &b)| a * b).sum()
+    }
+}
+
+
+impl Debug for CipherTextType{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.PublicKey)
+    }
+}
+*/
