@@ -11,8 +11,8 @@ use crate::neural_network::nnet::Nnet;
 /*
 DOC:
 if A is true and B is true, then A or B is true.
-if A is true and B is false, then A or B is true.
-if A is false and B is true, then A or B is true.
+if A is true and B is false, then A or B is false.
+if A is false and B is true, then A or B is false.
 if A is false and B is false, then A or B is false.
 */
 pub fn and_gate_net(A: bool, B: bool){
